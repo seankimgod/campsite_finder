@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>노지캠핑 지도</title>
+    
+    <!-- Kakao Map SDK - Must load before any script that uses it -->
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=89611920fb2bfca6a5576f0b6e7f4751&libraries=services"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #ffffff;
+            color: #202124;
+        }
+        
+        /* Header */
+        header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e8eaed;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            font-size: 28px;
+        }
+        
+        .logo-text {
+            font-size: 20px;
+            font-weight: 500;
+            color: #202124;
+        }
+        
+        .search-box {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 40px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #dfe1e5;
+            border-radius: 24px;
+            font-size: 14px;
+            font-family: 'Noto Sans KR', sans-serif;
+            transition: box-shadow 0.2s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+        }
+        
+        /* Map Container */
+        #map {
+            width: 100%;
+            height: calc(100vh - 65px);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: -480px;
+            top: 85px;
+            width: 450px;
+            max-height: calc(100vh - 110px);
+            background-color: #ffffff;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            border-radius: 12px;
+            transition: left 0.3s ease;
+            z-index: 1000;
+            overflow: hidden;
+            margin-left: 20px;
+        }
+        
+        .sidebar.open {
+            left: 0;
+        }
+        
+        .sidebar-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+        }
+        
+        .sidebar-header h2 {
+            font-size: 18px;
+            font-weight: 500;
+            color: #202124;
+            margin: 0;
+        }
+        
+        .sidebar-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #5f6368;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            transition: background-color 0.2s;
+        }
+        
+        .sidebar-close:hover {
+            background-color: #f1f3f4;
+        }
+        
+        .sidebar-content {
+            padding: 24px;
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+        }
+        
+        .place-title {
+            font-size: 22px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 16px;
+        }
+        
+        .place-info {
+            margin-bottom: 20px;
+        }
+        
+        .info-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            align-items: flex-start;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: #202124;
+            min-width: 70px;
+            flex-shrink: 0;
+        }
+        
+        .info-value {
+            color: #5f6368;
+            flex: 1;
+        }
+        
+        .address-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .copy-btn {
+            padding: 4px 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #5f6368;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .copy-btn:hover {
+            background-color: #e8eaed;
+        }
+        
+        .copy-btn.copied {
+            background-color: #e6f4ea;
+            color: #137333;
+            border-color: #137333;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .badge-type {
+            background-color: #e8f0fe;
+            color: #1967d2;
+        }
+        
+        .badge-concept {
+            background-color: #e6f4ea;
+            color: #137333;
+        }
+        
+        .instagram-simple {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e8eaed;
+        }
+        
+        .instagram-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .instagram-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #e8eaed;
+        }
+        
+        .instagram-username {
+            font-weight: 500;
+            font-size: 14px;
+            color: #202124;
+        }
+        
+        .instagram-image {
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .instagram-image:hover {
+            opacity: 0.9;
+        }
+        
+        .instagram-link {
+            display: inline-block;
+            margin-top: 12px;
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.2s;
+        }
+        
+        .instagram-link:hover {
+            color: #1557b0;
+            text-decoration: underline;
+        }
+        
+        .action-links {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e8eaed;
+        }
+        
+        .action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 16px;
+            background-color: #1a73e8;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+            flex: 1;
+        }
+        
+        .action-link:hover {
+            background-color: #1557b0;
+        }
+        
+        /* Loading */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            color: #5f6368;
+            z-index: 2000;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .search-box {
+                display: none;
+            }
+            
+            .sidebar {
+                width: calc(100% - 40px);
+                left: -100%;
+                margin-left: 20px;
+                margin-right: 20px;
+            }
+            
+            .sidebar.open {
+                left: 0;
+            }
+            
+            header {
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span class="logo-icon">🏕️</span>
+            <span class="logo-text">노지캠핑 지도</span>
+        </div>
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="장소 검색..." id="searchInput">
+        </div>
+    </header>
+    
+    <div id="map"></div>
+    
+    <!-- 좌측 사이드바 -->
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h2>장소 정보</h2>
+            <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+        </div>
+        <div id="sidebar-content" class="sidebar-content">
+            <!-- 여기에 장소 정보가 표시됩니다 -->
+        </div>
+    </div>
+    
+    <div class="loading" id="loading">지도 로딩 중...</div>
+    
+    <!-- Instagram Embed SDK -->
+    <script async src="//www.instagram.com/embed.js"></script>
+    
+    <script>
+        // 구글 시트 URL (CSV 형식으로 내보내기)
+        // 사용자가 자신의 구글 시트 URL로 교체해야 합니다
+        const SHEET_URL = 'YOUR_GOOGLE_SHEET_CSV_URL_HERE';
+        
+        // 샘플 데이터 (구글 시트 연동 전 테스트용)
+        const sampleData = [
+            {
+                name: '개야리 노지',
+                address: '강원특별자치도 홍천군 서면 개야리 93',
+                type: '노지캠핑',
+                concept: '강',
+                notes: '노지캠핑 인기스팟',
+                toilet: 'O',
+                water: 'X',
+                instagram: 'https://www.instagram.com/p/DKazkvsz1aY/'
+            }
+        ];
+        
+        let map;
+        let markers = [];
+        let geocoder; // 주소-좌표 변환 객체
+        
+        // 페이지 로드 완료 후 실행
+        window.addEventListener('load', function() {
+            initMap();
+        });
+        
+        // 지도 초기화
+        function initMap() {
+            const container = document.getElementById('map');
+            const options = {
+                center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울 중심
+                level: 12 // 전국이 보이도록
+            };
+            
+            map = new kakao.maps.Map(container, options);
+            geocoder = new kakao.maps.services.Geocoder(); // 주소 검색 객체 생성
+            document.getElementById('loading').style.display = 'none';
+            
+            // 지도 클릭 시 사이드바 닫기
+            kakao.maps.event.addListener(map, 'click', function() {
+                closeSidebar();
+            });
+            
+            // 지도 타입 컨트롤 추가 (지도/스카이뷰 전환)
+            const mapTypeControl = new kakao.maps.MapTypeControl();
+            map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+            
+            // 줌 컨트롤 추가
+            const zoomControl = new kakao.maps.ZoomControl();
+            map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+            
+            // 로드뷰 버튼 추가
+            addRoadviewButton();
+            
+            // 데이터 로드
+            loadData();
+        }
+        
+        // 로드뷰 버튼 추가
+        function addRoadviewButton() {
+            const roadviewBtn = document.createElement('div');
+            roadviewBtn.style.cssText = `
+                position: absolute;
+                top: 80px;
+                right: 10px;
+                background: #fff;
+                border: 1px solid #ddd;
+                padding: 6px;
+                cursor: pointer;
+                border-radius: 4px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                font-size: 12px;
+                font-weight: 500;
+                z-index: 100;
+            `;
+            roadviewBtn.innerHTML = '로드뷰';
+            roadviewBtn.onclick = function() {
+                const center = map.getCenter();
+                window.open(`https://map.kakao.com/link/roadview/${center.getLat()},${center.getLng()}`);
+            };
+            document.getElementById('map').appendChild(roadviewBtn);
+        }
+        
+        // 데이터 로드 (구글 시트 또는 샘플 데이터)
+        async function loadData() {
+            try {
+                // 구글 시트 URL이 설정되어 있으면 시트에서 로드
+                if (SHEET_URL !== 'YOUR_GOOGLE_SHEET_CSV_URL_HERE') {
+                    const response = await fetch(SHEET_URL);
+                    const csv = await response.text();
+                    const data = parseCSV(csv);
+                    displayMarkers(data);
+                } else {
+                    // 샘플 데이터 사용
+                    displayMarkers(sampleData);
+                }
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                displayMarkers(sampleData);
+            }
+        }
+        
+        // CSV 파싱
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',');
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                
+                const values = lines[i].split(',');
+                const item = {
+                    name: values[0]?.trim(),
+                    address: values[1]?.trim(),
+                    type: values[2]?.trim(),
+                    concept: values[3]?.trim(),
+                    notes: values[4]?.trim(),
+                    toilet: values[5]?.trim(),
+                    water: values[6]?.trim(),
+                    instagram: values[7]?.trim()
+                };
+                
+                if (item.name && item.address) {
+                    data.push(item);
+                }
+            }
+            
+            return data;
+        }
+        
+        // 마커 표시 (주소를 좌표로 변환)
+        function displayMarkers(data) {
+            let processedCount = 0;
+            const bounds = new kakao.maps.LatLngBounds(); // 모든 마커를 포함하는 영역
+            
+            data.forEach((item, index) => {
+                // 주소로 좌표 검색
+                geocoder.addressSearch(item.address, function(result, status) {
+                    if (status === kakao.maps.services.Status.OK) {
+                        const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                        
+                        // 주황색 원형 마커 생성
+                        const markerContent = document.createElement('div');
+                        markerContent.style.cssText = `
+                            width: 20px;
+                            height: 20px;
+                            background-color: #FF6B35;
+                            border: 3px solid #ffffff;
+                            border-radius: 50%;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                            cursor: pointer;
+                        `;
+                        
+                        const marker = new kakao.maps.CustomOverlay({
+                            position: coords,
+                            content: markerContent,
+                            yAnchor: 0.5
+                        });
+                        
+                        marker.setMap(map);
+                        
+                        // 마커 클릭 이벤트
+                        markerContent.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            showSidebar(item, coords);
+                        });
+                        
+                        markers.push(marker);
+                        bounds.extend(coords); // 영역에 좌표 추가
+                        
+                        processedCount++;
+                        
+                        // 모든 마커 처리 완료 시 지도 범위 조정
+                        if (processedCount === data.length) {
+                            map.setBounds(bounds);
+                        }
+                    } else {
+                        console.error('주소 검색 실패:', item.address);
+                    }
+                });
+            });
+        }
+        
+        // 사이드바 표시
+        function showSidebar(item, coords) {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('sidebar-content');
+            
+            // 인스타그램 간단 임베드 (프사, 아이디, 사진만)
+            let instagramContent = '';
+            if (item.instagram) {
+                // 인스타그램 URL에서 코드 추출
+                const postCode = item.instagram.match(/\/p\/([^\/]+)/)?.[1] || '';
+                instagramContent = `
+                    <div class="instagram-simple">
+                        <div class="instagram-header">
+                            <div class="instagram-avatar"></div>
+                            <span class="instagram-username">Instagram</span>
+                        </div>
+                        <a href="${item.instagram}" target="_blank">
+                            <img src="https://www.instagram.com/p/${postCode}/media/?size=l" 
+                                 class="instagram-image" 
+                                 alt="Instagram 사진"
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'400\'%3E%3Crect fill=\'%23f0f0f0\' width=\'400\' height=\'400\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'sans-serif\' font-size=\'18\' fill=\'%23999\'%3E이미지 로드 실패%3C/text%3E%3C/svg%3E'">
+                        </a>
+                        <a href="${item.instagram}" target="_blank" class="instagram-link">
+                            Instagram에서 보기 →
+                        </a>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = `
+                <h1 class="place-title">${item.name}</h1>
+                <div class="place-info">
+                    <div class="info-row">
+                        <span class="badge badge-type">${item.type}</span>
+                        <span class="badge badge-concept">${item.concept}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">주소</span>
+                        <div class="address-row" style="flex: 1;">
+                            <span class="info-value">${item.address}</span>
+                            <button class="copy-btn" onclick="copyAddress('${item.address}', this)">복사</button>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">특이사항</span>
+                        <span class="info-value">${item.notes}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">화장실</span>
+                        <span class="info-value">${item.toilet === 'O' ? '✓ 있음' : '✗ 없음'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">물 확보</span>
+                        <span class="info-value">${item.water === 'O' ? '✓ 가능' : '✗ 불가'}</span>
+                    </div>
+                </div>
+                <div class="action-links">
+                    <a href="https://map.kakao.com/link/search/${encodeURIComponent(item.address)}" target="_blank" class="action-link">
+                        카카오맵에서 보기
+                    </a>
+                </div>
+                ${instagramContent}
+            `;
+            
+            sidebar.classList.add('open');
+            
+            // 지도 중심 이동
+            map.panTo(coords);
+        }
+        
+        // 주소 복사 함수
+        function copyAddress(address, button) {
+            navigator.clipboard.writeText(address).then(() => {
+                button.textContent = '복사됨!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = '복사';
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                alert('복사 실패');
+            });
+        }
+        
+        // 사이드바 닫기
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.remove('open');
+        }
+        
+        // 검색 기능
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const keyword = e.target.value.toLowerCase();
+            
+            if (keyword === '') {
+                markers.forEach(marker => marker.setMap(map));
+                return;
+            }
+            
+            // 실제 구현시 데이터와 마커를 매칭하여 필터링
+            // 여기서는 간단한 예시만 제공
+        });
+    </script>
+</body>
+</html>
