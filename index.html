@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>노지캠핑 지도</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #ffffff;
+            color: #202124;
+        }
+        
+        /* Header */
+        header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e8eaed;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            font-size: 28px;
+        }
+        
+        .logo-text {
+            font-size: 20px;
+            font-weight: 500;
+            color: #202124;
+        }
+        
+        .search-box {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 40px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #dfe1e5;
+            border-radius: 24px;
+            font-size: 14px;
+            font-family: 'Noto Sans KR', sans-serif;
+            transition: box-shadow 0.2s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+        }
+        
+        /* Map Container */
+        #map {
+            width: 100%;
+            height: calc(100vh - 65px);
+        }
+        
+        /* Custom Overlay Styles */
+        .custom-overlay {
+            position: relative;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            padding: 20px;
+            min-width: 320px;
+            max-width: 400px;
+        }
+        
+        .overlay-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 24px;
+            height: 24px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #5f6368;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+        
+        .overlay-close:hover {
+            background-color: #f1f3f4;
+        }
+        
+        .overlay-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 12px;
+            padding-right: 24px;
+        }
+        
+        .overlay-info {
+            margin-bottom: 16px;
+        }
+        
+        .info-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #5f6368;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: #202124;
+            min-width: 80px;
+        }
+        
+        .info-value {
+            color: #5f6368;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+        
+        .badge-type {
+            background-color: #e8f0fe;
+            color: #1967d2;
+        }
+        
+        .badge-concept {
+            background-color: #e6f4ea;
+            color: #137333;
+        }
+        
+        .instagram-embed {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e8eaed;
+        }
+        
+        .instagram-embed iframe {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        
+        .address-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 13px;
+            margin-top: 8px;
+            transition: color 0.2s;
+        }
+        
+        .address-link:hover {
+            color: #1557b0;
+            text-decoration: underline;
+        }
+        
+        /* Loading */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            color: #5f6368;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .search-box {
+                display: none;
+            }
+            
+            .custom-overlay {
+                min-width: 280px;
+                max-width: 90vw;
+            }
+            
+            header {
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span class="logo-icon">🏕️</span>
+            <span class="logo-text">노지캠핑 지도</span>
+        </div>
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="장소 검색..." id="searchInput">
+        </div>
+    </header>
+    
+    <div id="map"></div>
+    <div class="loading" id="loading">지도 로딩 중...</div>
+    
+    <!-- Kakao Map SDK with services library for address search -->
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=89611920fb2bfca6a5576f0b6e7f4751&libraries=services&autoload=false"></script>
+    
+    <!-- Instagram Embed SDK -->
+    <script async src="//www.instagram.com/embed.js"></script>
+    
+    <script>
+        // 구글 시트 URL (CSV 형식으로 내보내기)
+        // 사용자가 자신의 구글 시트 URL로 교체해야 합니다
+        const SHEET_URL = 'YOUR_GOOGLE_SHEET_CSV_URL_HERE';
+        
+        // 샘플 데이터 (구글 시트 연동 전 테스트용)
+        const sampleData = [
+            {
+                name: '개야리 노지',
+                address: '강원특별자치도 홍천군 서면 개야리 93',
+                type: '노지캠핑',
+                concept: '강',
+                notes: '노지캠핑 인기스팟',
+                toilet: 'O',
+                water: 'X',
+                instagram: 'https://www.instagram.com/p/DKazkvsz1aY/'
+            }
+        ];
+        
+        let map;
+        let markers = [];
+        let overlays = [];
+        let geocoder; // 주소-좌표 변환 객체
+        
+        // 지도 초기화
+        function initMap() {
+            const container = document.getElementById('map');
+            const options = {
+                center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울 중심
+                level: 12 // 전국이 보이도록
+            };
+            
+            map = new kakao.maps.Map(container, options);
+            geocoder = new kakao.maps.services.Geocoder(); // 주소 검색 객체 생성
+            document.getElementById('loading').style.display = 'none';
+            
+            // 데이터 로드
+            loadData();
+        }
+        
+        // 데이터 로드 (구글 시트 또는 샘플 데이터)
+        async function loadData() {
+            try {
+                // 구글 시트 URL이 설정되어 있으면 시트에서 로드
+                if (SHEET_URL !== 'YOUR_GOOGLE_SHEET_CSV_URL_HERE') {
+                    const response = await fetch(SHEET_URL);
+                    const csv = await response.text();
+                    const data = parseCSV(csv);
+                    displayMarkers(data);
+                } else {
+                    // 샘플 데이터 사용
+                    displayMarkers(sampleData);
+                }
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                displayMarkers(sampleData);
+            }
+        }
+        
+        // CSV 파싱
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',');
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                
+                const values = lines[i].split(',');
+                const item = {
+                    name: values[0]?.trim(),
+                    address: values[1]?.trim(),
+                    type: values[2]?.trim(),
+                    concept: values[3]?.trim(),
+                    notes: values[4]?.trim(),
+                    toilet: values[5]?.trim(),
+                    water: values[6]?.trim(),
+                    instagram: values[7]?.trim()
+                };
+                
+                if (item.name && item.address) {
+                    data.push(item);
+                }
+            }
+            
+            return data;
+        }
+        
+        // 마커 표시 (주소를 좌표로 변환)
+        function displayMarkers(data) {
+            let processedCount = 0;
+            const bounds = new kakao.maps.LatLngBounds(); // 모든 마커를 포함하는 영역
+            
+            data.forEach((item, index) => {
+                // 주소로 좌표 검색
+                geocoder.addressSearch(item.address, function(result, status) {
+                    if (status === kakao.maps.services.Status.OK) {
+                        const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                        
+                        // 마커 생성
+                        const marker = new kakao.maps.Marker({
+                            position: coords,
+                            map: map
+                        });
+                        
+                        // 마커 클릭 이벤트
+                        kakao.maps.event.addListener(marker, 'click', function() {
+                            closeAllOverlays();
+                            showOverlay(item, coords);
+                        });
+                        
+                        markers.push(marker);
+                        bounds.extend(coords); // 영역에 좌표 추가
+                        
+                        processedCount++;
+                        
+                        // 모든 마커 처리 완료 시 지도 범위 조정
+                        if (processedCount === data.length) {
+                            map.setBounds(bounds);
+                        }
+                    } else {
+                        console.error('주소 검색 실패:', item.address);
+                    }
+                });
+            });
+        }
+        
+        // 오버레이 표시
+        function showOverlay(item, position) {
+            const content = createOverlayContent(item);
+            
+            const overlay = new kakao.maps.CustomOverlay({
+                content: content,
+                position: position,
+                yAnchor: 1.5
+            });
+            
+            overlay.setMap(map);
+            overlays.push(overlay);
+            
+            // 지도 중심을 오버레이 위치로 부드럽게 이동
+            map.panTo(position);
+            
+            // Instagram embed 로드
+            if (window.instgrm) {
+                window.instgrm.Embeds.process();
+            }
+        }
+        
+        // 오버레이 컨텐츠 생성
+        function createOverlayContent(item) {
+            const instagramEmbed = item.instagram ? 
+                `<div class="instagram-embed">
+                    <blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="${item.instagram}" data-instgrm-version="14" style="max-width:100%;"></blockquote>
+                </div>` : '';
+            
+            const div = document.createElement('div');
+            div.className = 'custom-overlay';
+            div.innerHTML = `
+                <button class="overlay-close" onclick="closeAllOverlays()">✕</button>
+                <h3 class="overlay-title">${item.name}</h3>
+                <div class="overlay-info">
+                    <div class="info-row">
+                        <span class="badge badge-type">${item.type}</span>
+                        <span class="badge badge-concept">${item.concept}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">주소</span>
+                        <span class="info-value">${item.address}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">특이사항</span>
+                        <span class="info-value">${item.notes}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">화장실</span>
+                        <span class="info-value">${item.toilet === 'O' ? '✓ 있음' : '✗ 없음'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">물 확보</span>
+                        <span class="info-value">${item.water === 'O' ? '✓ 가능' : '✗ 불가'}</span>
+                    </div>
+                    <a href="https://map.kakao.com/link/search/${encodeURIComponent(item.address)}" target="_blank" class="address-link">
+                        📍 카카오맵에서 보기 →
+                    </a>
+                </div>
+                ${instagramEmbed}
+            `;
+            
+            return div;
+        }
+        
+        // 모든 오버레이 닫기
+        function closeAllOverlays() {
+            overlays.forEach(overlay => overlay.setMap(null));
+            overlays = [];
+        }
+        
+        // 검색 기능
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const keyword = e.target.value.toLowerCase();
+            
+            if (keyword === '') {
+                markers.forEach(marker => marker.setMap(map));
+                return;
+            }
+            
+            // 실제 구현시 데이터와 마커를 매칭하여 필터링
+            // 여기서는 간단한 예시만 제공
+        });
+        
+        // 카카오맵 SDK 로드 후 지도 초기화
+        kakao.maps.load(function() {
+            initMap();
+        });
+    </script>
+</body>
+</html>
