@@ -394,17 +394,17 @@
         .filter-panel {
             position: fixed;
             right: 20px;
-            bottom: 30px;
+            bottom: 80px;
             background-color: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 12px 16px;
+            border-radius: 10px;
+            padding: 10px 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            max-width: 200px;
+            gap: 6px;
+            max-width: 170px;
         }
         
 
@@ -412,27 +412,27 @@
         .filter-divider {
             height: 1px;
             background-color: #e0e0e0;
-            margin: 8px 0;
+            margin: 6px 0;
         }
 
         .filter-row {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
             align-items: stretch;
         }
         
         .filter-checkbox {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             cursor: pointer;
             user-select: none;
-            font-size: 13px;
+            font-size: 12px;
             color: #202124;
-            padding: 8px 12px;
+            padding: 6px 10px;
             background-color: #f8f9fa;
-            border-radius: 8px;
+            border-radius: 6px;
             transition: all 0.2s;
             border: 2px solid transparent;
             white-space: nowrap;
@@ -444,8 +444,8 @@
         }
         
         .filter-checkbox input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             cursor: pointer;
             accent-color: #1a73e8;
         }
@@ -473,7 +473,7 @@
         .filter-divider {
             height: 1px;
             background-color: #e0e0e0;
-            margin: 8px 0;
+            margin: 6px 0;
         }
 
         .filter-row {
@@ -671,8 +671,8 @@
         function initMap() {
             const container = document.getElementById('map');
             const options = {
-                center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울 중심
-                level: 12 // 전국이 보이도록
+                center: new kakao.maps.LatLng(37.2, 127.3), // 경기/충청권 중심
+                level: 10 // 경기/충청권이 보이도록
             };
             
             map = new kakao.maps.Map(container, options);
@@ -793,9 +793,9 @@
                         
                         processedCount++;
                         
-                        // 모든 마커 처리 완료 시 지도 범위 조정
+                        // 모든 마커 처리 완료 시 필터 초기화만 실행
                         if (processedCount === data.length) {
-                            map.setBounds(bounds);
+                            // 지도 범위는 초기 설정값 유지 (자동 조정 안 함)
                             // 필터 이벤트 리스너 등록
                             initFilterListeners();
                         }
@@ -944,8 +944,17 @@
         
         // 필터 적용 (AND 조건)
         function applyFilters() {
+            const filterAll = document.getElementById('filter-all');
             const filterTypes = document.querySelectorAll('.filter-type:checked');
             const filterConcepts = document.querySelectorAll('.filter-concept:checked');
+            
+            // 전체가 체크 해제되어 있으면 모든 마커 숨김
+            if (!filterAll.checked) {
+                markers.forEach(markerObj => {
+                    markerObj.marker.setMap(null);
+                });
+                return;
+            }
             
             // 선택된 형태와 컨셉 값 가져오기
             const selectedTypes = Array.from(filterTypes).map(cb => cb.value);
