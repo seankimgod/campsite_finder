@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>노지캠핑 지도</title>
     
     <!-- Kakao Map SDK - Must load before any script that uses it -->
@@ -367,8 +367,9 @@
         /* 필터 토글 버튼 */
         .filter-toggle-btn {
             position: fixed;
-            right: 20px;
-            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 20px;
             background: #fff;
             border: none;
             padding: 8px 15px;
@@ -402,8 +403,9 @@
         /* Floating Filter Panel */
         .filter-panel {
             position: fixed;
-            right: 20px;
-            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 70px;
             background-color: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 10px;
