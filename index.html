@@ -261,6 +261,88 @@
             background-color: #1557b0;
         }
         
+
+        /* Floating Filter Panel */
+        .filter-panel {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 14px;
+            color: #202124;
+            padding: 8px 14px;
+            background-color: #f8f9fa;
+            border-radius: 20px;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .filter-checkbox:hover {
+            background-color: #e8f0fe;
+            border-color: #1a73e8;
+        }
+        
+        .filter-checkbox input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #1a73e8;
+        }
+        
+        .filter-checkbox input[type="checkbox"]:checked + span {
+            font-weight: 500;
+            color: #1a73e8;
+        }
+        
+        .filter-checkbox span {
+            white-space: nowrap;
+        }
+        
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .filter-panel {
+                bottom: 20px;
+                left: 10px;
+                right: 10px;
+                transform: none;
+                padding: 12px 16px;
+            }
+            
+            .filter-row {
+                gap: 8px;
+            }
+            
+            .filter-checkbox {
+                font-size: 13px;
+                padding: 6px 12px;
+            }
+        }
+
         /* Loading */
         .loading {
             position: fixed;
@@ -307,6 +389,54 @@
     </header>
     
     <div id="map"></div>
+    
+    <!-- 플로팅 필터 패널 -->
+    <div class="filter-panel">
+        <div class="filter-row">
+            <label class="filter-checkbox">
+                <input type="checkbox" id="filter-all" checked>
+                <span>전체</span>
+            </label>
+            <label class="filter-checkbox">
+                <input type="checkbox" class="filter-type" value="백패킹" checked>
+                <span>백패킹</span>
+            </label>
+            <label class="filter-checkbox">
+                <input type="checkbox" class="filter-type" value="캠핑" checked>
+                <span>캠핑</span>
+            </label>
+            <label class="filter-checkbox">
+                <input type="checkbox" class="filter-type" value="차박" checked>
+                <span>차박</span>
+            </label>
+            <label class="filter-checkbox">
+                <input type="checkbox" class="filter-type" value="피크닉" checked>
+                <span>피크닉</span>
+            </label>
+        </div>
+        <div class="filter-row">
+            <label class="filter-checkbox">
+                <input type="checkbox" class="filter-concept" value="산" checked>
+                <span>산</span>
+            </label>
+            <label class="filter-checkbox">
+                <input type="checkbox" class="filter-concept" value="강" checked>
+                <span>강</span>
+            </label>
+            <label class="filter-checkbox">
+                <input type="checkbox" class="filter-concept" value="바다" checked>
+                <span>바다</span>
+            </label>
+            <label class="filter-checkbox">
+                <input type="checkbox" class="filter-concept" value="계곡" checked>
+                <span>계곡</span>
+            </label>
+            <label class="filter-checkbox">
+                <input type="checkbox" class="filter-concept" value="호수" checked>
+                <span>호수</span>
+            </label>
+        </div>
+    </div>
     
     <!-- 좌측 사이드바 -->
     <div id="sidebar" class="sidebar">
@@ -570,7 +700,11 @@
                             showSidebar(item, coords);
                         });
                         
-                        markers.push(marker);
+                        // 마커를 데이터와 함께 저장
+                        markers.push({
+                            marker: marker,
+                            data: item
+                        });
                         bounds.extend(coords); // 영역에 좌표 추가
                         
                         processedCount++;
@@ -578,6 +712,8 @@
                         // 모든 마커 처리 완료 시 지도 범위 조정
                         if (processedCount === data.length) {
                             map.setBounds(bounds);
+                            // 필터 이벤트 리스너 등록
+                            initFilterListeners();
                         }
                     } else {
                         console.error('주소 검색 실패:', item.address);
@@ -664,6 +800,68 @@
                 }, 2000);
             }).catch(err => {
                 alert('복사 실패');
+            });
+        }
+        
+
+        // 필터 기능 초기화
+        function initFilterListeners() {
+            const filterAll = document.getElementById('filter-all');
+            const filterTypes = document.querySelectorAll('.filter-type');
+            const filterConcepts = document.querySelectorAll('.filter-concept');
+            
+            // 전체 체크박스 클릭
+            filterAll.addEventListener('change', function() {
+                const isChecked = this.checked;
+                filterTypes.forEach(cb => cb.checked = isChecked);
+                filterConcepts.forEach(cb => cb.checked = isChecked);
+                applyFilters();
+            });
+            
+            // 개별 필터 체크박스 클릭
+            [...filterTypes, ...filterConcepts].forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    // 전체 체크박스 상태 업데이트
+                    updateAllCheckbox();
+                    applyFilters();
+                });
+            });
+        }
+        
+        // 전체 체크박스 상태 업데이트
+        function updateAllCheckbox() {
+            const filterAll = document.getElementById('filter-all');
+            const filterTypes = document.querySelectorAll('.filter-type');
+            const filterConcepts = document.querySelectorAll('.filter-concept');
+            
+            const allFilters = [...filterTypes, ...filterConcepts];
+            const allChecked = allFilters.every(cb => cb.checked);
+            
+            filterAll.checked = allChecked;
+        }
+        
+        // 필터 적용 (AND 조건)
+        function applyFilters() {
+            const filterTypes = document.querySelectorAll('.filter-type:checked');
+            const filterConcepts = document.querySelectorAll('.filter-concept:checked');
+            
+            // 선택된 형태와 컨셉 값 가져오기
+            const selectedTypes = Array.from(filterTypes).map(cb => cb.value);
+            const selectedConcepts = Array.from(filterConcepts).map(cb => cb.value);
+            
+            // 모든 마커 순회하며 필터링
+            markers.forEach(markerObj => {
+                const { marker, data } = markerObj;
+                
+                // AND 조건: 형태도 맞고 컨셉도 맞아야 표시
+                const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(data.type);
+                const conceptMatch = selectedConcepts.length === 0 || selectedConcepts.includes(data.concept);
+                
+                if (typeMatch && conceptMatch) {
+                    marker.setMap(map); // 마커 표시
+                } else {
+                    marker.setMap(null); // 마커 숨김
+                }
             });
         }
         
