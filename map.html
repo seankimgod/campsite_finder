@@ -35,6 +35,11 @@
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 1px 2px 0 rgba(60,64,67,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
         }
         
         .logo {
@@ -58,7 +63,11 @@
         /* Map Container */
         #map {
             width: 100%;
-            height: calc(100vh - 65px);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
         }
         
         /* Sidebar */
@@ -72,7 +81,7 @@
             box-shadow: 0 4px 16px rgba(0,0,0,0.15);
             border-radius: 12px;
             transition: left 0.3s ease;
-            z-index: 1000;
+            z-index: 1002;
             overflow: hidden;
             margin-left: 20px;
         }
@@ -357,7 +366,7 @@
 
         /* 필터 토글 버튼 */
         .filter-toggle-btn {
-            position: absolute;
+            position: fixed;
             right: 20px;
             bottom: 30px;
             background: #fff;
@@ -368,7 +377,7 @@
             font-size: 12px;
             font-weight: 500;
             color: #333;
-            z-index: 999;
+            z-index: 1001;
             user-select: none;
             box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 2px 0px;
             line-height: 14px;
@@ -687,6 +696,15 @@
             // 지도 타입 컨트롤 추가 (지도/스카이뷰 전환)
             const mapTypeControl = new kakao.maps.MapTypeControl();
             map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+            
+            // 지도 컨트롤 z-index 조정
+            setTimeout(() => {
+                const controls = document.querySelectorAll('.MapTypeControl, .custom_typecontrol');
+                controls.forEach(control => {
+                    control.style.zIndex = '10';
+                    control.style.marginTop = '75px';
+                });
+            }, 100);
             
             // 데이터 로드
             loadData();
