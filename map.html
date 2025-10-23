@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>노지캠핑 지도</title>
     
     <!-- Kakao Map SDK - Must load before any script that uses it -->
@@ -24,6 +24,8 @@
             font-family: 'Noto Sans KR', sans-serif;
             background-color: #ffffff;
             color: #202124;
+            touch-action: pan-x pan-y;
+            -webkit-text-size-adjust: 100%;
         }
         
         /* Header */
@@ -271,6 +273,27 @@
         .hamburger-btn:hover {
             background-color: #f1f3f4;
         }
+
+        /* 헤더 모바일 최적화 */
+        @media (max-width: 768px) {
+            header {
+                padding: 12px 16px;
+            }
+            
+            .logo-icon {
+                font-size: 24px;
+            }
+            
+            .logo-text {
+                font-size: 16px;
+            }
+            
+            .hamburger-btn {
+                font-size: 24px;
+                padding: 4px;
+            }
+        }
+
         
         /* 사이드 메뉴 */
         .side-menu {
@@ -409,13 +432,33 @@
             background-color: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 10px;
-            padding: 10px 12px;
+            padding: 10px 14px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             z-index: 1000;
             display: flex;
             flex-direction: column;
             gap: 6px;
-            max-width: 170px;
+            max-width: 180px;
+            min-width: 150px;
+        }
+        
+        /* PC: 세로 배치 */
+        @media (min-width: 769px) {
+            .filter-panel {
+                flex-direction: column;
+                max-width: 180px;
+            }
+            
+            .filter-row {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                align-items: stretch;
+            }
+            
+            .filter-divider {
+                display: block;
+            }
         }
         
 
@@ -426,12 +469,7 @@
             margin: 6px 0;
         }
 
-        .filter-row {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            align-items: stretch;
-        }
+
         
         .filter-checkbox {
             display: flex;
@@ -699,12 +737,17 @@
             const mapTypeControl = new kakao.maps.MapTypeControl();
             map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
             
-            // 지도 컨트롤 z-index 조정
+            // 지도 컨트롤 z-index 및 위치 조정
             setTimeout(() => {
                 const controls = document.querySelectorAll('.MapTypeControl, .custom_typecontrol');
                 controls.forEach(control => {
                     control.style.zIndex = '10';
-                    control.style.marginTop = '75px';
+                    // 모바일 체크
+                    if (window.innerWidth <= 768) {
+                        control.style.marginTop = '70px';
+                    } else {
+                        control.style.marginTop = '75px';
+                    }
                 });
             }, 100);
             
