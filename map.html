@@ -358,17 +358,17 @@
         /* 필터 토글 버튼 */
         .filter-toggle-btn {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            right: 20px;
+            bottom: 30px;
             background: #fff;
             border: none;
             padding: 8px 15px;
             cursor: pointer;
-            border-radius: 2px;
+            border-radius: 8px;
             font-size: 12px;
             font-weight: 500;
             color: #333;
-            z-index: 10;
+            z-index: 999;
             user-select: none;
             box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 2px 0px;
             line-height: 14px;
@@ -393,8 +393,8 @@
         /* Floating Filter Panel */
         .filter-panel {
             position: fixed;
-            left: 10px;
-            top: 60px;
+            right: 20px;
+            bottom: 30px;
             background-color: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 12px;
@@ -407,6 +407,14 @@
             max-width: 200px;
         }
         
+
+        /* 필터 구분선 */
+        .filter-divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 8px 0;
+        }
+
         .filter-row {
             display: flex;
             flex-direction: column;
@@ -460,7 +468,15 @@
                 padding: 10px 12px;
             }
             
-            .filter-row {
+    
+        /* 필터 구분선 */
+        .filter-divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 8px 0;
+        }
+
+        .filter-row {
                 gap: 6px;
             }
             
@@ -558,6 +574,11 @@
                 <input type="checkbox" id="filter-all" checked>
                 <span>전체</span>
             </label>
+        </div>
+        
+        <div class="filter-divider"></div>
+        
+        <div class="filter-row">
             <label class="filter-checkbox">
                 <input type="checkbox" class="filter-type" value="백패킹" checked>
                 <span>백패킹</span>
@@ -575,6 +596,9 @@
                 <span>피크닉</span>
             </label>
         </div>
+        
+        <div class="filter-divider"></div>
+        
         <div class="filter-row">
             <label class="filter-checkbox">
                 <input type="checkbox" class="filter-concept" value="산" checked>
@@ -668,21 +692,28 @@
             loadData();
         }
         
-        // 데이터 로드 (구글 시트 또는 샘플 데이터)
+        // 데이터 로드 (구글 시트)
         async function loadData() {
             try {
-                // 구글 시트 URL이 설정되어 있으면 시트에서 로드
-                if (SHEET_URL !== 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXIUYgOtCn0xs3kX8erZJVjzVwLw33YTbAUhRXll7d_qFoB_vWKQUXhUepIjUvaJVM2uyEsd1isi9R/pub?output=csv') {
-                    const response = await fetch(SHEET_URL);
-                    const csv = await response.text();
-                    const data = parseCSV(csv);
+                console.log('구글 시트에서 데이터 로드 시도:', SHEET_URL);
+                const response = await fetch(SHEET_URL);
+                if (!response.ok) {
+                    throw new Error('HTTP error! status: ' + response.status);
+                }
+                const csv = await response.text();
+                console.log('CSV 데이터 로드 성공');
+                const data = parseCSV(csv);
+                console.log('파싱된 데이터:', data.length + '개');
+                
+                if (data.length > 0) {
                     displayMarkers(data);
                 } else {
-                    // 샘플 데이터 사용
+                    console.warn('데이터가 비어있습니다. 샘플 데이터 사용');
                     displayMarkers(sampleData);
                 }
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
+                console.log('샘플 데이터로 대체');
                 displayMarkers(sampleData);
             }
         }
