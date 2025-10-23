@@ -470,7 +470,7 @@
     <script>
         // 구글 시트 URL (CSV 형식으로 내보내기)
         // 사용자가 자신의 구글 시트 URL로 교체해야 합니다
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXIUYgOtCn0xs3kX8erZJVjzVwLw33YTbAUhRXll7d_qFoB_vWKQUXhUepIjUvaJVM2uyEsd1isi9R/pubhtml';
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXIUYgOtCn0xs3kX8erZJVjzVwLw33YTbAUhRXll7d_qFoB_vWKQUXhUepIjUvaJVM2uyEsd1isi9R/pub?output=csv';
         
         // 샘플 데이터 (구글 시트 연동 전 테스트용)
         const sampleData = [
@@ -524,7 +524,7 @@
         async function loadData() {
             try {
                 // 구글 시트 URL이 설정되어 있으면 시트에서 로드
-                if (SHEET_URL !== 'YOUR_GOOGLE_SHEET_CSV_URL_HERE') {
+                if (SHEET_URL !== 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXIUYgOtCn0xs3kX8erZJVjzVwLw33YTbAUhRXll7d_qFoB_vWKQUXhUepIjUvaJVM2uyEsd1isi9R/pub?output=csv') {
                     const response = await fetch(SHEET_URL);
                     const csv = await response.text();
                     const data = parseCSV(csv);
@@ -582,10 +582,10 @@
                         // 주황색 원형 마커 생성
                         const markerContent = document.createElement('div');
                         markerContent.style.cssText = `
-                            width: 20px;
-                            height: 20px;
+                            width: 10px;
+                            height: 10px;
                             background-color: #FF6B35;
-                            border: 3px solid #ffffff;
+                            border: 2px solid #ffffff;
                             border-radius: 50%;
                             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
                             cursor: pointer;
