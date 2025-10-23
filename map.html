@@ -392,7 +392,7 @@
             position: fixed;
             left: 50%;
             transform: translateX(-50%);
-            bottom: 20px;
+            bottom: 80px;
             background: #fff;
             border: none;
             padding: 8px 15px;
@@ -428,7 +428,7 @@
             position: fixed;
             left: 50%;
             transform: translateX(-50%);
-            bottom: 70px;
+            bottom: 130px;
             background-color: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 10px;
@@ -739,17 +739,26 @@
             
             // 지도 컨트롤 z-index 및 위치 조정
             setTimeout(() => {
-                const controls = document.querySelectorAll('.MapTypeControl, .custom_typecontrol');
+                const controls = document.querySelectorAll('.MapTypeControl, .custom_typecontrol, .custom_zoomcontrol');
                 controls.forEach(control => {
-                    control.style.zIndex = '10';
+                    control.style.display = 'block';
+                    control.style.visibility = 'visible';
+                    control.style.zIndex = '50';
                     // 모바일 체크
                     if (window.innerWidth <= 768) {
-                        control.style.marginTop = '70px';
+                        control.style.marginTop = '65px';
+                        control.style.marginRight = '10px';
                     } else {
-                        control.style.marginTop = '75px';
+                        control.style.marginTop = '10px';
+                        control.style.marginRight = '10px';
                     }
                 });
             }, 100);
+            
+            // 지도 타입 변경 이벤트 확인
+            kakao.maps.event.addListener(map, 'maptypeid_changed', function() {
+                console.log('지도 타입 변경됨');
+            });
             
             // 데이터 로드
             loadData();
