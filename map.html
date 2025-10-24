@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>지도</title>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=89611920fb2bfca6a5576f0b6e7f4751&libraries=services"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            overflow: hidden;
+        }
+
+        .map-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 좌측 사이드바 */
+        .sidebar {
+            width: 360px;
+            background-color: #ffffff;
+            border-right: 1px solid #e4e4e4;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 필터 섹션 */
+        .filter-section {
+            padding: 20px;
+            border-bottom: 1px solid #e4e4e4;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .filter-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .filter-group {
+            margin-bottom: 20px;
+        }
+
+        .filter-group-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background-color: #f5f5f5;
+            border: 1px solid #e4e4e4;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .filter-chip:hover {
+            background-color: #e8f5e9;
+        }
+
+        .filter-chip.active {
+            background-color: #00c73c;
+            color: #ffffff;
+            border-color: #00c73c;
+        }
+
+        .filter-chip input[type="checkbox"] {
+            display: none;
+        }
+
+        /* 장소 정보 섹션 */
+        .info-section {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .info-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .info-content {
+            display: none;
+        }
+
+        .info-content.active {
+            display: block;
+        }
+
+        .place-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .place-badges {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            background-color: #e8f5e9;
+            color: #00c73c;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .place-detail {
+            margin-bottom: 16px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .place-instagram {
+            margin-top: 20px;
+        }
+
+        .instagram-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            background-color: #00c73c;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .instagram-link:hover {
+            background-color: #00b035;
+        }
+
+        /* 지도 */
+        #map {
+            flex: 1;
+            position: relative;
+        }
+
+        /* 모바일 */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            #map {
+                width: 100%;
+            }
+
+            /* 모바일 필터 버튼 */
+            .mobile-filter-btn {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 12px 24px;
+                background-color: #00c73c;
+                color: #ffffff;
+                border: none;
+                border-radius: 24px;
+                font-size: 14px;
+                font-weight: 600;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                cursor: pointer;
+                z-index: 100;
+            }
+
+            /* 모바일 필터 모달 */
+            .mobile-filter-modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0,0,0,0.5);
+                z-index: 1000;
+            }
+
+            .mobile-filter-modal.active {
+                display: block;
+            }
+
+            .mobile-filter-content {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: #ffffff;
+                border-radius: 16px 16px 0 0;
+                padding: 20px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+
+            .modal-title {
+                font-size: 18px;
+                font-weight: 600;
+            }
+
+            .modal-close {
+                font-size: 24px;
+                cursor: pointer;
+                color: #666;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-filter-btn,
+            .mobile-filter-modal {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="map-container">
+        <!-- 좌측 사이드바 -->
+        <aside class="sidebar">
+            <!-- 필터 섹션 -->
+            <div class="filter-section">
+                <div class="filter-title">🔍 필터</div>
+                
+                <div class="filter-group">
+                    <div class="filter-group-label">형태</div>
+                    <div class="filter-options">
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-type" value="백패킹" checked>
+                            <span>백패킹</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-type" value="캠핑" checked>
+                            <span>캠핑</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-type" value="차박" checked>
+                            <span>차박</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-type" value="노지캠핑" checked>
+                            <span>노지캠핑</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-type" value="피크닉" checked>
+                            <span>피크닉</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-group-label">컨셉</div>
+                    <div class="filter-options">
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-concept" value="산" checked>
+                            <span>산</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-concept" value="강" checked>
+                            <span>강</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-concept" value="바다" checked>
+                            <span>바다</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-concept" value="계곡" checked>
+                            <span>계곡</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-concept" value="호수" checked>
+                            <span>호수</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-concept" value="들판" checked>
+                            <span>들판</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="filter-concept" value="숲" checked>
+                            <span>숲</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 장소 정보 섹션 -->
+            <div class="info-section">
+                <div class="info-empty" id="infoEmpty">
+                    마커를 클릭하면 상세 정보가 표시됩니다
+                </div>
+                <div class="info-content" id="infoContent">
+                    <!-- 동적으로 채워짐 -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- 지도 -->
+        <div id="map"></div>
+
+        <!-- 모바일 필터 버튼 -->
+        <button class="mobile-filter-btn" onclick="openMobileFilter()">필터</button>
+
+        <!-- 모바일 필터 모달 -->
+        <div class="mobile-filter-modal" id="mobileFilterModal" onclick="closeMobileFilter(event)">
+            <div class="mobile-filter-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <div class="modal-title">필터</div>
+                    <div class="modal-close" onclick="closeMobileFilter()">✕</div>
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-group-label">형태</div>
+                    <div class="filter-options">
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-type" value="백패킹" checked>
+                            <span>백패킹</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-type" value="캠핑" checked>
+                            <span>캠핑</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-type" value="차박" checked>
+                            <span>차박</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-type" value="노지캠핑" checked>
+                            <span>노지캠핑</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-type" value="피크닉" checked>
+                            <span>피크닉</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-group-label">컨셉</div>
+                    <div class="filter-options">
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-concept" value="산" checked>
+                            <span>산</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-concept" value="강" checked>
+                            <span>강</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-concept" value="바다" checked>
+                            <span>바다</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-concept" value="계곡" checked>
+                            <span>계곡</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-concept" value="호수" checked>
+                            <span>호수</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-concept" value="들판" checked>
+                            <span>들판</span>
+                        </label>
+                        <label class="filter-chip active">
+                            <input type="checkbox" class="mobile-filter-concept" value="숲" checked>
+                            <span>숲</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXIUYgOtCn0xs3kX8erZJVjzVwLw33YTbAUhRXll7d_qFoB_vWKQUXhUepIjUvaJVM2uyEsd1isi9R/pub?output=csv';
+        
+        let map;
+        let markers = [];
+        let geocoder;
+        let allData = [];
+
+        // 지도 초기화
+        function initMap() {
+            const container = document.getElementById('map');
+            const options = {
+                center: new kakao.maps.LatLng(37.2, 127.3),
+                level: 10
+            };
+            
+            map = new kakao.maps.Map(container, options);
+            geocoder = new kakao.maps.services.Geocoder();
+            
+            // 지도 타입 컨트롤
+            const mapTypeControl = new kakao.maps.MapTypeControl();
+            map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+            
+            // 줌 컨트롤
+            const zoomControl = new kakao.maps.ZoomControl();
+            map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+            
+            loadData();
+        }
+
+        // 데이터 로드
+        async function loadData() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const csv = await response.text();
+                const data = parseCSV(csv);
+                allData = data;
+                displayMarkers(data);
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+            }
+        }
+
+        // CSV 파싱
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                
+                const values = lines[i].split('\t');
+                const item = {
+                    name: values[0]?.trim(),
+                    address: values[1]?.trim(),
+                    type: values[2]?.trim(),
+                    concept: values[3]?.trim(),
+                    notes: values[4]?.trim(),
+                    toilet: values[5]?.trim(),
+                    water: values[6]?.trim(),
+                    instagram: values[7]?.trim()
+                };
+                
+                if (item.name && item.address) {
+                    data.push(item);
+                }
+            }
+            
+            return data;
+        }
+
+        // 마커 표시
+        function displayMarkers(data) {
+            // 기존 마커 제거
+            markers.forEach(m => m.marker.setMap(null));
+            markers = [];
+            
+            data.forEach(item => {
+                geocoder.addressSearch(item.address, function(result, status) {
+                    if (status === kakao.maps.services.Status.OK) {
+                        const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                        
+                        const marker = new kakao.maps.Marker({
+                            map: map,
+                            position: coords
+                        });
+                        
+                        kakao.maps.event.addListener(marker, 'click', function() {
+                            showPlaceInfo(item);
+                        });
+                        
+                        markers.push({ marker, data: item });
+                    }
+                });
+            });
+        }
+
+        // 장소 정보 표시
+        function showPlaceInfo(item) {
+            const infoEmpty = document.getElementById('infoEmpty');
+            const infoContent = document.getElementById('infoContent');
+            
+            infoEmpty.style.display = 'none';
+            infoContent.classList.add('active');
+            
+            let html = `
+                <div class="place-name">${item.name}</div>
+                <div class="place-badges">
+                    <span class="badge">${item.type}</span>
+                    <span class="badge">${item.concept}</span>
+                </div>
+                <div class="place-detail">
+                    <div class="detail-label">주소</div>
+                    <div class="detail-value">${item.address}</div>
+                </div>
+            `;
+            
+            if (item.notes) {
+                html += `
+                    <div class="place-detail">
+                        <div class="detail-label">특이사항</div>
+                        <div class="detail-value">${item.notes}</div>
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div class="place-detail">
+                    <div class="detail-label">편의시설</div>
+                    <div class="detail-value">
+                        화장실: ${item.toilet === 'O' ? '있음' : '없음'} | 
+                        물: ${item.water === 'O' ? '가능' : '불가'}
+                    </div>
+                </div>
+            `;
+            
+            if (item.instagram) {
+                html += `
+                    <div class="place-instagram">
+                        <a href="${item.instagram}" target="_blank" class="instagram-link">
+                            📷 인스타그램 보기
+                        </a>
+                    </div>
+                `;
+            }
+            
+            infoContent.innerHTML = html;
+        }
+
+        // 필터 적용
+        function applyFilters() {
+            const selectedTypes = Array.from(document.querySelectorAll('.filter-type:checked')).map(cb => cb.value);
+            const selectedConcepts = Array.from(document.querySelectorAll('.filter-concept:checked')).map(cb => cb.value);
+            
+            const filtered = allData.filter(item => {
+                const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(item.type);
+                const conceptMatch = selectedConcepts.length === 0 || selectedConcepts.includes(item.concept);
+                return typeMatch && conceptMatch;
+            });
+            
+            displayMarkers(filtered);
+        }
+
+        // 필터 이벤트
+        function initFilters() {
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    const checkbox = this.querySelector('input');
+                    checkbox.checked = !checkbox.checked;
+                    this.classList.toggle('active', checkbox.checked);
+                    applyFilters();
+                });
+            });
+            
+            // 모바일 필터
+            document.querySelectorAll('.mobile-filter-modal .filter-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    const checkbox = this.querySelector('input');
+                    checkbox.checked = !checkbox.checked;
+                    this.classList.toggle('active', checkbox.checked);
+                    
+                    // PC 필터와 동기화
+                    const value = checkbox.value;
+                    const className = checkbox.className;
+                    const pcCheckbox = document.querySelector(`.filter-section .${className.replace('mobile-', '')}[value="${value}"]`);
+                    if (pcCheckbox) {
+                        pcCheckbox.checked = checkbox.checked;
+                        pcCheckbox.parentElement.classList.toggle('active', checkbox.checked);
+                    }
+                    
+                    applyFilters();
+                });
+            });
+        }
+
+        // 모바일 필터 모달
+        function openMobileFilter() {
+            document.getElementById('mobileFilterModal').classList.add('active');
+        }
+
+        function closeMobileFilter(event) {
+            if (!event || event.target.id === 'mobileFilterModal') {
+                document.getElementById('mobileFilterModal').classList.remove('active');
+            }
+        }
+
+        // 초기화
+        window.addEventListener('load', function() {
+            initMap();
+            initFilters();
+        });
+    </script>
+</body>
+</html>
