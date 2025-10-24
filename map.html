@@ -92,6 +92,27 @@
             display: none;
         }
 
+        /* 전체 선택/해제 버튼 */
+        .select-all-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background-color: #ffffff;
+            border: 1px solid #e4e4e4;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .select-all-btn:hover {
+            background-color: #f5f5f5;
+        }
+
+        .select-all-btn:active {
+            transform: scale(0.98);
+        }
+
         /* 장소 정보 섹션 */
         .info-section {
             flex: 1;
@@ -270,26 +291,28 @@
         <aside class="sidebar">
             <!-- 필터 섹션 -->
             <div class="filter-section">
-                <div class="filter-title">🔍 필터</div>
+                <div class="filter-title">필터</div>
+                
+                <!-- 전체 선택/해제 버튼 -->
+                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                    <button class="select-all-btn" onclick="selectAllFilters()">전체 선택</button>
+                    <button class="select-all-btn" onclick="deselectAllFilters()">전체 해제</button>
+                </div>
                 
                 <div class="filter-group">
                     <div class="filter-group-label">형태</div>
                     <div class="filter-options">
                         <label class="filter-chip active">
-                            <input type="checkbox" class="filter-type" value="백패킹" checked>
-                            <span>백패킹</span>
-                        </label>
-                        <label class="filter-chip active">
                             <input type="checkbox" class="filter-type" value="캠핑" checked>
                             <span>캠핑</span>
                         </label>
                         <label class="filter-chip active">
-                            <input type="checkbox" class="filter-type" value="차박" checked>
-                            <span>차박</span>
+                            <input type="checkbox" class="filter-type" value="백패킹" checked>
+                            <span>백패킹</span>
                         </label>
                         <label class="filter-chip active">
-                            <input type="checkbox" class="filter-type" value="노지캠핑" checked>
-                            <span>노지캠핑</span>
+                            <input type="checkbox" class="filter-type" value="차박" checked>
+                            <span>차박</span>
                         </label>
                         <label class="filter-chip active">
                             <input type="checkbox" class="filter-type" value="피크닉" checked>
@@ -321,14 +344,6 @@
                             <input type="checkbox" class="filter-concept" value="호수" checked>
                             <span>호수</span>
                         </label>
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="filter-concept" value="들판" checked>
-                            <span>들판</span>
-                        </label>
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="filter-concept" value="숲" checked>
-                            <span>숲</span>
-                        </label>
                     </div>
                 </div>
             </div>
@@ -358,24 +373,26 @@
                     <div class="modal-close" onclick="closeMobileFilter()">✕</div>
                 </div>
                 
+                <!-- 전체 선택/해제 버튼 -->
+                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                    <button class="select-all-btn" onclick="selectAllFilters()">전체 선택</button>
+                    <button class="select-all-btn" onclick="deselectAllFilters()">전체 해제</button>
+                </div>
+                
                 <div class="filter-group">
                     <div class="filter-group-label">형태</div>
                     <div class="filter-options">
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-type" value="백패킹" checked>
-                            <span>백패킹</span>
-                        </label>
                         <label class="filter-chip active">
                             <input type="checkbox" class="mobile-filter-type" value="캠핑" checked>
                             <span>캠핑</span>
                         </label>
                         <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-type" value="차박" checked>
-                            <span>차박</span>
+                            <input type="checkbox" class="mobile-filter-type" value="백패킹" checked>
+                            <span>백패킹</span>
                         </label>
                         <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-type" value="노지캠핑" checked>
-                            <span>노지캠핑</span>
+                            <input type="checkbox" class="mobile-filter-type" value="차박" checked>
+                            <span>차박</span>
                         </label>
                         <label class="filter-chip active">
                             <input type="checkbox" class="mobile-filter-type" value="피크닉" checked>
@@ -406,14 +423,6 @@
                         <label class="filter-chip active">
                             <input type="checkbox" class="mobile-filter-concept" value="호수" checked>
                             <span>호수</span>
-                        </label>
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-concept" value="들판" checked>
-                            <span>들판</span>
-                        </label>
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-concept" value="숲" checked>
-                            <span>숲</span>
                         </label>
                     </div>
                 </div>
@@ -645,6 +654,26 @@
                     applyFilters();
                 });
             });
+        }
+
+        // 전체 선택
+        function selectAllFilters() {
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                const checkbox = chip.querySelector('input');
+                checkbox.checked = true;
+                chip.classList.add('active');
+            });
+            applyFilters();
+        }
+
+        // 전체 해제
+        function deselectAllFilters() {
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                const checkbox = chip.querySelector('input');
+                checkbox.checked = false;
+                chip.classList.remove('active');
+            });
+            applyFilters();
         }
 
         // 모바일 필터 모달
