@@ -77,6 +77,7 @@
             cursor: pointer;
             font-size: 13px;
             transition: all 0.2s;
+            user-select: none;
         }
 
         .filter-chip:hover {
@@ -91,27 +92,6 @@
 
         .filter-chip input[type="checkbox"] {
             display: none;
-        }
-
-        /* 전체 선택/해제 버튼 */
-        .select-all-btn {
-            flex: 1;
-            padding: 8px 12px;
-            background-color: #ffffff;
-            border: 1px solid #e4e4e4;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .select-all-btn:hover {
-            background-color: #f5f5f5;
-        }
-
-        .select-all-btn:active {
-            transform: scale(0.98);
         }
 
         /* 장소 정보 섹션 */
@@ -178,7 +158,7 @@
         .copy-btn {
             margin-left: 8px;
             padding: 4px 10px;
-            background-color: #00c73c;
+            background-color: #F24E29;
             color: #ffffff;
             border: none;
             border-radius: 4px;
@@ -189,7 +169,7 @@
         }
 
         .copy-btn:hover {
-            background-color: #00b035;
+            background-color: #d63d1f;
         }
 
         .copy-btn:active {
@@ -198,6 +178,12 @@
 
         .place-instagram {
             margin-top: 20px;
+        }
+
+        /* 지도 */
+        #map {
+            flex: 1;
+            position: relative;
         }
 
         /* 모바일 장소 정보 모달 */
@@ -217,7 +203,6 @@
         }
 
         .mobile-place-modal.active {
-            display: block;
             transform: translateY(0);
         }
 
@@ -236,42 +221,6 @@
             max-height: calc(70vh - 40px);
         }
 
-        @media (max-width: 768px) {
-            .mobile-place-modal {
-                display: block;
-            }
-        }
-
-        @media (min-width: 769px) {
-            .mobile-place-modal {
-                display: none !important;
-            }
-        }
-
-        .instagram-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 10px 16px;
-            background-color: #00c73c;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .instagram-link:hover {
-            background-color: #00b035;
-        }
-
-        /* 지도 */
-        #map {
-            flex: 1;
-            position: relative;
-        }
-
         /* 모바일 */
         @media (max-width: 768px) {
             .sidebar {
@@ -286,17 +235,15 @@
                 border-top: 1px solid #e4e4e4;
                 border-radius: 16px 16px 0 0;
                 box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-                transform: translateY(calc(100% - 60px));
+                transform: translateY(calc(100% - 80px));
                 transition: transform 0.3s ease;
                 z-index: 1000;
-                flex-direction: column;
             }
 
             .sidebar.expanded {
                 transform: translateY(0);
             }
 
-            /* 드래그 핸들 */
             .sidebar::before {
                 content: '';
                 position: absolute;
@@ -323,13 +270,13 @@
                 height: 100vh;
             }
 
-            /* 모바일 필터 버튼 제거 */
-            .mobile-filter-btn {
-                display: none;
+            .mobile-place-modal {
+                display: block;
             }
+        }
 
-            /* 모바일 필터 모달 제거 */
-            .mobile-filter-modal {
+        @media (min-width: 769px) {
+            .mobile-place-modal {
                 display: none !important;
             }
         }
@@ -338,7 +285,7 @@
 <body>
     <div class="map-container">
         <!-- 좌측 사이드바 -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <!-- 필터 섹션 -->
             <div class="filter-section">
                 <div class="filter-title">필터</div>
@@ -347,7 +294,7 @@
                 <div class="filter-group">
                     <div class="filter-options">
                         <label class="filter-chip active" id="toggleAllChip">
-                            <input type="checkbox" id="toggleAllCheckbox" checked>
+                            <input type="checkbox" checked>
                             <span>전체</span>
                         </label>
                     </div>
@@ -407,9 +354,7 @@
                 <div class="info-empty" id="infoEmpty">
                     마커를 클릭하면 상세 정보가 표시됩니다
                 </div>
-                <div class="info-content" id="infoContent">
-                    <!-- 동적으로 채워짐 -->
-                </div>
+                <div class="info-content" id="infoContent"></div>
             </div>
         </aside>
 
@@ -419,9 +364,7 @@
         <!-- 모바일 장소 정보 모달 -->
         <div class="mobile-place-modal" id="mobilePlaceModal">
             <div class="mobile-place-handle"></div>
-            <div class="mobile-place-content" id="mobilePlaceContent">
-                <!-- 동적으로 채워짐 -->
-            </div>
+            <div class="mobile-place-content" id="mobilePlaceContent"></div>
         </div>
     </div>
 
@@ -458,26 +401,15 @@
         // 데이터 로드
         async function loadData() {
             try {
-                console.log('구글 시트 URL:', SHEET_URL);
                 const response = await fetch(SHEET_URL);
-                console.log('응답 상태:', response.status);
-                
                 const csv = await response.text();
-                console.log('CSV 원본 데이터 (첫 500자):', csv.substring(0, 500));
-                
                 const data = parseCSV(csv);
-                console.log('파싱 완료, 데이터 개수:', data.length);
-                
-                if (data.length === 0) {
-                    console.warn('⚠️ 데이터가 비어있습니다. 구글 시트를 확인하세요.');
-                    alert('구글 시트에 데이터가 없거나 형식이 올바르지 않습니다.\n\n1. 구글 시트가 "웹에 게시" 되어있는지 확인\n2. 첫 번째 행이 헤더인지 확인\n3. 데이터가 2번째 행부터 있는지 확인');
-                }
                 
                 allData = data;
+                console.log('로드된 데이터:', data.length, '개');
                 displayMarkers(data);
             } catch (error) {
-                console.error('❌ 데이터 로드 실패:', error);
-                alert('데이터 로드 실패:\n' + error.message);
+                console.error('데이터 로드 실패:', error);
             }
         }
 
@@ -489,7 +421,6 @@
             for (let i = 1; i < lines.length; i++) {
                 if (lines[i].trim() === '') continue;
                 
-                // 탭 또는 콤마로 분리 (구글 시트는 탭 사용)
                 let values = lines[i].includes('\t') ? lines[i].split('\t') : lines[i].split(',');
                 
                 const item = {
@@ -508,22 +439,16 @@
                 }
             }
             
-            console.log('파싱된 데이터:', data);
             return data;
         }
 
         // 마커 표시
         function displayMarkers(data) {
-            console.log('마커 표시 시작, 데이터 개수:', data.length);
-            
             // 기존 마커 제거
             markers.forEach(m => m.marker.setMap(null));
             markers = [];
             
-            let successCount = 0;
-            let failCount = 0;
-            
-            data.forEach((item, index) => {
+            data.forEach((item) => {
                 geocoder.addressSearch(item.address, function(result, status) {
                     if (status === kakao.maps.services.Status.OK) {
                         const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
@@ -541,7 +466,6 @@
                             transition: all 0.2s;
                         `;
                         
-                        // 호버 효과
                         markerContent.addEventListener('mouseenter', function() {
                             this.style.transform = 'scale(1.2)';
                         });
@@ -557,22 +481,11 @@
                         
                         customOverlay.setMap(map);
                         
-                        // 클릭 이벤트
                         markerContent.addEventListener('click', function() {
                             showPlaceInfo(item);
                         });
                         
                         markers.push({ marker: customOverlay, data: item });
-                        successCount++;
-                        console.log(`✅ 마커 생성 성공 (${successCount}/${data.length}): ${item.name}`);
-                    } else {
-                        failCount++;
-                        console.warn(`❌ 주소 검색 실패 (${index + 1}/${data.length}): ${item.name} - ${item.address}`);
-                    }
-                    
-                    // 마지막 항목 처리 후
-                    if (successCount + failCount === data.length) {
-                        console.log(`📍 마커 표시 완료: 성공 ${successCount}개, 실패 ${failCount}개`);
                     }
                 });
             });
@@ -596,10 +509,8 @@
             
             infoEmpty.style.display = 'none';
             infoContent.classList.add('active');
-            
             infoContent.innerHTML = getPlaceInfoHTML(item);
             
-            // 인스타그램 임베드 처리
             loadInstagramEmbed(item);
         }
 
@@ -609,10 +520,8 @@
             const content = document.getElementById('mobilePlaceContent');
             
             content.innerHTML = getPlaceInfoHTML(item);
-            
             modal.classList.add('active');
             
-            // 인스타그램 임베드 처리
             loadInstagramEmbed(item);
         }
 
@@ -626,8 +535,8 @@
                 </div>
                 <div class="place-detail">
                     <div class="detail-label">주소</div>
-                    <div class="detail-value" style="display: flex; align-items: center; gap: 8px;">
-                        <span style="flex: 1;">${item.address}</span>
+                    <div class="detail-value">
+                        ${item.address}
                         <button class="copy-btn" onclick="copyAddress('${item.address.replace(/'/g, "\\'")}')">복사</button>
                     </div>
                 </div>
@@ -650,24 +559,16 @@
             }
             
             if (item.instagram) {
-                const instagramMatch = item.instagram.match(/instagram\.com\/p\/([A-Za-z0-9_-]+)/);
-                if (instagramMatch) {
-                    html += `
-                        <div class="place-instagram">
-                            <div class="detail-label" style="margin-bottom: 12px;">인스타그램 출처</div>
-                            <blockquote class="instagram-media" 
-                                data-instgrm-permalink="${item.instagram}?utm_source=ig_embed&amp;utm_campaign=loading" 
-                                data-instgrm-version="14"
-                                style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:100%; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);">
-                                <div style="padding:16px;">
-                                    <a href="${item.instagram}" style="background:#FFFFFF; line-height:0; padding:0 0; text-align:center; text-decoration:none; width:100%;" target="_blank">
-                                        인스타그램에서 이 게시물 보기
-                                    </a>
-                                </div>
-                            </blockquote>
-                        </div>
-                    `;
-                }
+                html += `
+                    <div class="place-instagram">
+                        <div class="detail-label" style="margin-bottom: 12px;">인스타그램 출처</div>
+                        <blockquote class="instagram-media" 
+                            data-instgrm-permalink="${item.instagram}" 
+                            data-instgrm-version="14"
+                            style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5); margin: 1px; max-width:100%; min-width:326px; padding:0;">
+                        </blockquote>
+                    </div>
+                `;
             }
             
             return html;
@@ -675,27 +576,19 @@
 
         // 인스타그램 임베드 로드
         function loadInstagramEmbed(item) {
+            if (item.instagram) {
                 setTimeout(() => {
                     if (window.instgrm) {
                         window.instgrm.Embeds.process();
-                    } else {
-                        // 스크립트가 아직 로드 안 됐으면 다시 로드
-                        const script = document.createElement('script');
-                        script.async = true;
-                        script.src = '//www.instagram.com/embed.js';
-                        document.body.appendChild(script);
                     }
                 }, 100);
             }
         }
-        
-        // 주소 복사 함수
+
+        // 주소 복사
         function copyAddress(address) {
             navigator.clipboard.writeText(address).then(() => {
                 alert('주소가 복사되었습니다!');
-            }).catch(err => {
-                console.error('복사 실패:', err);
-                alert('복사에 실패했습니다.');
             });
         }
 
@@ -703,6 +596,11 @@
         function applyFilters() {
             const selectedTypes = Array.from(document.querySelectorAll('.filter-type:checked')).map(cb => cb.value);
             const selectedConcepts = Array.from(document.querySelectorAll('.filter-concept:checked')).map(cb => cb.value);
+            
+            if (selectedTypes.length === 0 && selectedConcepts.length === 0) {
+                markers.forEach(m => m.marker.setMap(null));
+                return;
+            }
             
             const filtered = allData.filter(item => {
                 const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(item.type);
@@ -713,19 +611,40 @@
             displayMarkers(filtered);
         }
 
-        // 필터 이벤트
+        // 전체 토글
+        function toggleAllFilters() {
+            const toggleAllChip = document.getElementById('toggleAllChip');
+            const isActive = toggleAllChip.classList.contains('active');
+            
+            if (isActive) {
+                // 전체 해제
+                toggleAllChip.classList.remove('active');
+                document.querySelectorAll('.filter-type, .filter-concept').forEach(checkbox => {
+                    checkbox.checked = false;
+                    checkbox.parentElement.classList.remove('active');
+                });
+                markers.forEach(m => m.marker.setMap(null));
+            } else {
+                // 전체 선택
+                toggleAllChip.classList.add('active');
+                document.querySelectorAll('.filter-type, .filter-concept').forEach(checkbox => {
+                    checkbox.checked = true;
+                    checkbox.parentElement.classList.add('active');
+                });
+                applyFilters();
+            }
+        }
+
+        // 필터 초기화
         function initFilters() {
             // 전체 토글 버튼
-            const toggleAll = document.getElementById('toggleAllChip');
-            if (toggleAll) {
-                toggleAll.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    toggleAllFilters();
-                });
-            }
+            document.getElementById('toggleAllChip').addEventListener('click', function(e) {
+                e.preventDefault();
+                toggleAllFilters();
+            });
             
-            // 필터 칩 (전체 버튼 제외)
-            document.querySelectorAll('.filter-section .filter-chip:not(#toggleAllChip)').forEach(chip => {
+            // 필터 칩
+            document.querySelectorAll('.filter-chip:not(#toggleAllChip)').forEach(chip => {
                 chip.addEventListener('click', function() {
                     const checkbox = this.querySelector('input');
                     checkbox.checked = !checkbox.checked;
@@ -735,15 +654,12 @@
             });
         }
 
-        // 모바일 사이드바 드래그 기능
+        // 모바일 사이드바 드래그
         function initMobileSidebar() {
             if (window.innerWidth > 768) return;
             
-            const sidebar = document.querySelector('.sidebar');
-            if (!sidebar) return;
-            
+            const sidebar = document.getElementById('sidebar');
             let startY = 0;
-            let currentY = 0;
             let isDragging = false;
 
             sidebar.addEventListener('touchstart', function(e) {
@@ -754,12 +670,12 @@
 
             sidebar.addEventListener('touchmove', function(e) {
                 if (!isDragging) return;
-                currentY = e.touches[0].clientY;
+                const currentY = e.touches[0].clientY;
                 const diff = currentY - startY;
                 
-                if (diff > 10) {
+                if (diff > 30) {
                     sidebar.classList.remove('expanded');
-                } else if (diff < -10) {
+                } else if (diff < -30) {
                     sidebar.classList.add('expanded');
                 }
             });
@@ -769,11 +685,9 @@
             });
         }
 
-        // 모바일 장소 모달 드래그 기능
+        // 모바일 장소 모달 드래그
         function initMobilePlaceModal() {
             const modal = document.getElementById('mobilePlaceModal');
-            if (!modal) return;
-            
             const handle = modal.querySelector('.mobile-place-handle');
             let startY = 0;
             let isDragging = false;
@@ -797,66 +711,6 @@
             handle.addEventListener('touchend', function() {
                 isDragging = false;
             });
-        }
-
-        // 전체 토글
-        function toggleAllFilters() {
-            const toggleAllChip = document.getElementById('toggleAllChip');
-            const toggleAllCheckbox = document.getElementById('toggleAllCheckbox');
-            
-            // 현재 상태 반전
-            const newState = !toggleAllCheckbox.checked;
-            toggleAllCheckbox.checked = newState;
-            
-            if (newState) {
-                // 전체 선택
-                toggleAllChip.classList.add('active');
-                document.querySelectorAll('.filter-type, .filter-concept').forEach(checkbox => {
-                    checkbox.checked = true;
-                    checkbox.parentElement.classList.add('active');
-                });
-                applyFilters();
-            } else {
-                // 전체 해제
-                toggleAllChip.classList.remove('active');
-                document.querySelectorAll('.filter-type, .filter-concept').forEach(checkbox => {
-                    checkbox.checked = false;
-                    checkbox.parentElement.classList.remove('active');
-                });
-                // 모든 마커 숨김
-                markers.forEach(m => m.marker.setMap(null));
-            }
-        }
-
-        // 필터 적용
-        function applyFilters() {
-            const selectedTypes = Array.from(document.querySelectorAll('.filter-type:checked')).map(cb => cb.value);
-            const selectedConcepts = Array.from(document.querySelectorAll('.filter-concept:checked')).map(cb => cb.value);
-            
-            // 모두 체크 해제된 경우
-            if (selectedTypes.length === 0 && selectedConcepts.length === 0) {
-                markers.forEach(m => m.marker.setMap(null));
-                return;
-            }
-            
-            const filtered = allData.filter(item => {
-                const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(item.type);
-                const conceptMatch = selectedConcepts.length === 0 || selectedConcepts.includes(item.concept);
-                return typeMatch && conceptMatch;
-            });
-            
-            displayMarkers(filtered);
-        }
-
-        // 모바일 필터 모달
-        function openMobileFilter() {
-            document.getElementById('mobileFilterModal').classList.add('active');
-        }
-
-        function closeMobileFilter(event) {
-            if (!event || event.target.id === 'mobileFilterModal') {
-                document.getElementById('mobileFilterModal').classList.remove('active');
-            }
         }
 
         // 초기화
