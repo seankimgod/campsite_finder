@@ -47,7 +47,6 @@
             width: 60px;
             height: 60px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: pointer;
@@ -67,13 +66,9 @@
             color: #ffffff;
         }
 
-        .nav-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
-
         .nav-label {
-            font-size: 11px;
+            font-size: 13px;
+            font-weight: 600;
         }
 
         /* iframe */
@@ -114,21 +109,18 @@
 <body>
     <div class="container">
         <nav class="nav-sidebar">
-            <div class="logo">🏕️</div>
+            <div class="logo" onclick="window.location.reload()" style="cursor: pointer;">🏕️</div>
             
             <a href="#" class="nav-item active" data-page="map">
-                <div class="nav-icon">🗺️</div>
-                <div class="nav-label">지도</div>
+                <div class="nav-label" style="font-weight: 600;">지도</div>
             </a>
             
             <a href="#" class="nav-item" data-page="curation">
-                <div class="nav-icon">✨</div>
-                <div class="nav-label">추천</div>
+                <div class="nav-label" style="font-weight: 600;">추천</div>
             </a>
             
             <a href="#" class="nav-item" data-page="contact">
-                <div class="nav-icon">📧</div>
-                <div class="nav-label">문의</div>
+                <div class="nav-label" style="font-weight: 600;">문의</div>
             </a>
         </nav>
 
