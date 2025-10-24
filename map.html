@@ -200,6 +200,54 @@
             margin-top: 20px;
         }
 
+        /* 모바일 장소 정보 모달 */
+        .mobile-place-modal {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #ffffff;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            max-height: 70vh;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 2000;
+        }
+
+        .mobile-place-modal.active {
+            display: block;
+            transform: translateY(0);
+        }
+
+        .mobile-place-handle {
+            width: 40px;
+            height: 4px;
+            background-color: #ddd;
+            border-radius: 2px;
+            margin: 12px auto 20px;
+            cursor: grab;
+        }
+
+        .mobile-place-content {
+            padding: 0 20px 20px;
+            overflow-y: auto;
+            max-height: calc(70vh - 40px);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-place-modal {
+                display: block;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-place-modal {
+                display: none !important;
+            }
+        }
+
         .instagram-link {
             display: inline-flex;
             align-items: center;
@@ -227,82 +275,62 @@
         /* 모바일 */
         @media (max-width: 768px) {
             .sidebar {
-                display: none;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                height: auto;
+                max-height: 70vh;
+                border-right: none;
+                border-top: 1px solid #e4e4e4;
+                border-radius: 16px 16px 0 0;
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+                transform: translateY(calc(100% - 60px));
+                transition: transform 0.3s ease;
+                z-index: 1000;
+                flex-direction: column;
+            }
+
+            .sidebar.expanded {
+                transform: translateY(0);
+            }
+
+            /* 드래그 핸들 */
+            .sidebar::before {
+                content: '';
+                position: absolute;
+                top: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 4px;
+                background-color: #ddd;
+                border-radius: 2px;
+            }
+
+            .filter-section {
+                padding-top: 30px;
+                max-height: none;
+            }
+
+            .info-section {
+                display: none !important;
             }
 
             #map {
                 width: 100%;
+                height: 100vh;
             }
 
-            /* 모바일 필터 버튼 */
+            /* 모바일 필터 버튼 제거 */
             .mobile-filter-btn {
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                padding: 12px 24px;
-                background-color: #F24E29;
-                color: #ffffff;
-                border: none;
-                border-radius: 24px;
-                font-size: 14px;
-                font-weight: 600;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                cursor: pointer;
-                z-index: 100;
-            }
-
-            /* 모바일 필터 모달 */
-            .mobile-filter-modal {
                 display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: rgba(0,0,0,0.5);
-                z-index: 1000;
             }
 
-            .mobile-filter-modal.active {
-                display: block;
-            }
-
-            .mobile-filter-content {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background-color: #ffffff;
-                border-radius: 16px 16px 0 0;
-                padding: 20px;
-                max-height: 70vh;
-                overflow-y: auto;
-            }
-
-            .modal-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 20px;
-            }
-
-            .modal-title {
-                font-size: 18px;
-                font-weight: 600;
-            }
-
-            .modal-close {
-                font-size: 24px;
-                cursor: pointer;
-                color: #666;
-            }
-        }
-
-        @media (min-width: 769px) {
-            .mobile-filter-btn,
+            /* 모바일 필터 모달 제거 */
             .mobile-filter-modal {
-                display: none;
+                display: none !important;
             }
         }
     </style>
@@ -388,74 +416,11 @@
         <!-- 지도 -->
         <div id="map"></div>
 
-        <!-- 모바일 필터 버튼 -->
-        <button class="mobile-filter-btn" onclick="openMobileFilter()">필터</button>
-
-        <!-- 모바일 필터 모달 -->
-        <div class="mobile-filter-modal" id="mobileFilterModal" onclick="closeMobileFilter(event)">
-            <div class="mobile-filter-content" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <div class="modal-title">필터</div>
-                    <div class="modal-close" onclick="closeMobileFilter()">✕</div>
-                </div>
-                
-                <!-- 전체 토글 버튼 -->
-                <div class="filter-group">
-                    <div class="filter-options">
-                        <label class="filter-chip active" id="mobileToggleAllChip">
-                            <input type="checkbox" id="mobileToggleAllCheckbox" checked>
-                            <span>전체</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="filter-group">
-                    <div class="filter-group-label">형태</div>
-                    <div class="filter-options">
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-type" value="캠핑" checked>
-                            <span>캠핑</span>
-                        </label>
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-type" value="백패킹" checked>
-                            <span>백패킹</span>
-                        </label>
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-type" value="차박" checked>
-                            <span>차박</span>
-                        </label>
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-type" value="피크닉" checked>
-                            <span>피크닉</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="filter-group">
-                    <div class="filter-group-label">컨셉</div>
-                    <div class="filter-options">
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-concept" value="산" checked>
-                            <span>산</span>
-                        </label>
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-concept" value="강" checked>
-                            <span>강</span>
-                        </label>
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-concept" value="바다" checked>
-                            <span>바다</span>
-                        </label>
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-concept" value="계곡" checked>
-                            <span>계곡</span>
-                        </label>
-                        <label class="filter-chip active">
-                            <input type="checkbox" class="mobile-filter-concept" value="호수" checked>
-                            <span>호수</span>
-                        </label>
-                    </div>
-                </div>
+        <!-- 모바일 장소 정보 모달 -->
+        <div class="mobile-place-modal" id="mobilePlaceModal">
+            <div class="mobile-place-handle"></div>
+            <div class="mobile-place-content" id="mobilePlaceContent">
+                <!-- 동적으로 채워짐 -->
             </div>
         </div>
     </div>
@@ -615,12 +580,44 @@
 
         // 장소 정보 표시
         function showPlaceInfo(item) {
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                showMobilePlaceInfo(item);
+            } else {
+                showDesktopPlaceInfo(item);
+            }
+        }
+
+        // PC 장소 정보 표시
+        function showDesktopPlaceInfo(item) {
             const infoEmpty = document.getElementById('infoEmpty');
             const infoContent = document.getElementById('infoContent');
             
             infoEmpty.style.display = 'none';
             infoContent.classList.add('active');
             
+            infoContent.innerHTML = getPlaceInfoHTML(item);
+            
+            // 인스타그램 임베드 처리
+            loadInstagramEmbed(item);
+        }
+
+        // 모바일 장소 정보 표시
+        function showMobilePlaceInfo(item) {
+            const modal = document.getElementById('mobilePlaceModal');
+            const content = document.getElementById('mobilePlaceContent');
+            
+            content.innerHTML = getPlaceInfoHTML(item);
+            
+            modal.classList.add('active');
+            
+            // 인스타그램 임베드 처리
+            loadInstagramEmbed(item);
+        }
+
+        // 장소 정보 HTML 생성
+        function getPlaceInfoHTML(item) {
             let html = `
                 <div class="place-name">${item.name}</div>
                 <div class="place-badges">
@@ -653,7 +650,6 @@
             }
             
             if (item.instagram) {
-                // 인스타그램 URL에서 게시물 ID 추출
                 const instagramMatch = item.instagram.match(/instagram\.com\/p\/([A-Za-z0-9_-]+)/);
                 if (instagramMatch) {
                     html += `
@@ -674,10 +670,11 @@
                 }
             }
             
-            infoContent.innerHTML = html;
-            
-            // 인스타그램 임베드 스크립트 재실행
-            if (item.instagram) {
+            return html;
+        }
+
+        // 인스타그램 임베드 로드
+        function loadInstagramEmbed(item) {
                 setTimeout(() => {
                     if (window.instgrm) {
                         window.instgrm.Embeds.process();
@@ -736,25 +733,69 @@
                     applyFilters();
                 });
             });
+        }
+
+        // 모바일 사이드바 드래그 기능
+        function initMobileSidebar() {
+            if (window.innerWidth > 768) return;
             
-            // 모바일 필터
-            document.querySelectorAll('.mobile-filter-modal .filter-chip:not(#mobileToggleAllChip)').forEach(chip => {
-                chip.addEventListener('click', function() {
-                    const checkbox = this.querySelector('input');
-                    checkbox.checked = !checkbox.checked;
-                    this.classList.toggle('active', checkbox.checked);
-                    
-                    // PC 필터와 동기화
-                    const value = checkbox.value;
-                    const className = checkbox.className;
-                    const pcCheckbox = document.querySelector(`.filter-section .${className.replace('mobile-', '')}[value="${value}"]`);
-                    if (pcCheckbox) {
-                        pcCheckbox.checked = checkbox.checked;
-                        pcCheckbox.parentElement.classList.toggle('active', checkbox.checked);
-                    }
-                    
-                    applyFilters();
-                });
+            const sidebar = document.querySelector('.sidebar');
+            if (!sidebar) return;
+            
+            let startY = 0;
+            let currentY = 0;
+            let isDragging = false;
+
+            sidebar.addEventListener('touchstart', function(e) {
+                if (e.target.closest('.filter-chip')) return;
+                startY = e.touches[0].clientY;
+                isDragging = true;
+            });
+
+            sidebar.addEventListener('touchmove', function(e) {
+                if (!isDragging) return;
+                currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+                
+                if (diff > 10) {
+                    sidebar.classList.remove('expanded');
+                } else if (diff < -10) {
+                    sidebar.classList.add('expanded');
+                }
+            });
+
+            sidebar.addEventListener('touchend', function() {
+                isDragging = false;
+            });
+        }
+
+        // 모바일 장소 모달 드래그 기능
+        function initMobilePlaceModal() {
+            const modal = document.getElementById('mobilePlaceModal');
+            if (!modal) return;
+            
+            const handle = modal.querySelector('.mobile-place-handle');
+            let startY = 0;
+            let isDragging = false;
+
+            handle.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+                isDragging = true;
+            });
+
+            handle.addEventListener('touchmove', function(e) {
+                if (!isDragging) return;
+                const currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+                
+                if (diff > 50) {
+                    modal.classList.remove('active');
+                    isDragging = false;
+                }
+            });
+
+            handle.addEventListener('touchend', function() {
+                isDragging = false;
             });
         }
 
@@ -822,6 +863,8 @@
         window.addEventListener('load', function() {
             initMap();
             initFilters();
+            initMobileSidebar();
+            initMobilePlaceModal();
         });
     </script>
 </body>
