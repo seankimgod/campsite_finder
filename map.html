@@ -71,6 +71,21 @@
             left: 0;
             z-index: 0;
         }
+
+        /* 지도 타입 컨트롤 강제 표시 */
+        .map_type {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .MapTypeControl,
+        .custom_typecontrol {
+            display: block !important;
+            visibility: visible !important;
+            z-index: 50 !important;
+        }
+
         
         /* Sidebar */
         .sidebar {
@@ -737,23 +752,45 @@
             const mapTypeControl = new kakao.maps.MapTypeControl();
             map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
             
-            // 지도 컨트롤 z-index 및 위치 조정
+            // 지도 컨트롤 강제 표시
             setTimeout(() => {
-                const controls = document.querySelectorAll('.MapTypeControl, .custom_typecontrol, .custom_zoomcontrol');
-                controls.forEach(control => {
-                    control.style.display = 'block';
-                    control.style.visibility = 'visible';
-                    control.style.zIndex = '50';
-                    // 모바일 체크
-                    if (window.innerWidth <= 768) {
-                        control.style.marginTop = '65px';
-                        control.style.marginRight = '10px';
-                    } else {
-                        control.style.marginTop = '10px';
-                        control.style.marginRight = '10px';
+                // 카카오맵 기본 컨트롤 찾기
+                const mapContainer = document.getElementById('map');
+                const allDivs = mapContainer.querySelectorAll('div');
+                
+                allDivs.forEach(div => {
+                    // 지도 타입 컨트롤 찾기
+                    if (div.className && (
+                        div.className.includes('map_type') || 
+                        div.className.includes('MapTypeControl') ||
+                        div.className.includes('custom_typecontrol')
+                    )) {
+                        div.style.display = 'block';
+                        div.style.visibility = 'visible';
+                        div.style.opacity = '1';
+                        div.style.zIndex = '50';
+                        div.style.position = 'absolute';
+                        div.style.top = '10px';
+                        div.style.right = '10px';
+                        
+                        // 모바일
+                        if (window.innerWidth <= 768) {
+                            div.style.top = '70px';
+                        }
+                        
+                        console.log('지도 컨트롤 발견:', div.className);
                     }
                 });
-            }, 100);
+                
+                // 전체 지도 타입 컨트롤 강제 표시
+                const typeControls = document.querySelectorAll('[class*="map_type"]');
+                typeControls.forEach(ctrl => {
+                    ctrl.style.display = 'block';
+                    ctrl.style.visibility = 'visible';
+                    ctrl.style.opacity = '1';
+                    console.log('타입 컨트롤 표시:', ctrl);
+                });
+            }, 300);
             
             // 지도 타입 변경 이벤트 확인
             kakao.maps.event.addListener(map, 'maptypeid_changed', function() {
@@ -762,6 +799,10 @@
             
             // 데이터 로드
             loadData();
+            
+            // 지도 컨트롤 디버깅
+            console.log('지도 초기화 완료');
+            console.log('지도 객체:', map);
         }
         
         // 데이터 로드 (구글 시트)
