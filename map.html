@@ -315,16 +315,12 @@
             <div class="filter-section">
                 <div class="filter-title">필터</div>
                 
-                <!-- 전체 선택/해제 버튼 -->
+                <!-- 전체 토글 버튼 -->
                 <div class="filter-group">
                     <div class="filter-options">
-                        <label class="filter-chip active" id="selectAllChip">
-                            <input type="checkbox" id="selectAllCheckbox" checked>
-                            <span>전체 선택</span>
-                        </label>
-                        <label class="filter-chip" id="deselectAllChip">
-                            <input type="checkbox" id="deselectAllCheckbox">
-                            <span>전체 해제</span>
+                        <label class="filter-chip active" id="toggleAllChip">
+                            <input type="checkbox" id="toggleAllCheckbox" checked>
+                            <span>전체</span>
                         </label>
                     </div>
                 </div>
@@ -403,16 +399,12 @@
                     <div class="modal-close" onclick="closeMobileFilter()">✕</div>
                 </div>
                 
-                <!-- 전체 선택/해제 버튼 -->
+                <!-- 전체 토글 버튼 -->
                 <div class="filter-group">
                     <div class="filter-options">
-                        <label class="filter-chip active" id="mobileSelectAllChip">
-                            <input type="checkbox" id="mobileSelectAllCheckbox" checked>
-                            <span>전체 선택</span>
-                        </label>
-                        <label class="filter-chip" id="mobileDeselectAllChip">
-                            <input type="checkbox" id="mobileDeselectAllCheckbox">
-                            <span>전체 해제</span>
+                        <label class="filter-chip active" id="mobileToggleAllChip">
+                            <input type="checkbox" id="mobileToggleAllCheckbox" checked>
+                            <span>전체</span>
                         </label>
                     </div>
                 </div>
@@ -637,9 +629,16 @@
                 </div>
                 <div class="place-detail">
                     <div class="detail-label">주소</div>
-                    <div class="detail-value">
-                        ${item.address}
+                    <div class="detail-value" style="display: flex; align-items: center; gap: 8px;">
+                        <span style="flex: 1;">${item.address}</span>
                         <button class="copy-btn" onclick="copyAddress('${item.address.replace(/'/g, "\\'")}')">복사</button>
+                    </div>
+                </div>
+                <div class="place-detail">
+                    <div class="detail-label">편의시설</div>
+                    <div class="detail-value">
+                        화장실: ${item.toilet === 'O' ? 'O' : 'X'} | 
+                        개수대: ${item.water === 'O' ? 'O' : 'X'}
                     </div>
                 </div>
             `;
@@ -653,23 +652,13 @@
                 `;
             }
             
-            html += `
-                <div class="place-detail">
-                    <div class="detail-label">편의시설</div>
-                    <div class="detail-value">
-                        화장실: ${item.toilet === 'O' ? 'O' : 'X'} | 
-                        개수대: ${item.water === 'O' ? 'O' : 'X'}
-                    </div>
-                </div>
-            `;
-            
             if (item.instagram) {
                 // 인스타그램 URL에서 게시물 ID 추출
                 const instagramMatch = item.instagram.match(/instagram\.com\/p\/([A-Za-z0-9_-]+)/);
                 if (instagramMatch) {
                     html += `
                         <div class="place-instagram">
-                            <div class="detail-label" style="margin-bottom: 12px;">인스타그램</div>
+                            <div class="detail-label" style="margin-bottom: 12px;">인스타그램 출처</div>
                             <blockquote class="instagram-media" 
                                 data-instgrm-permalink="${item.instagram}?utm_source=ig_embed&amp;utm_campaign=loading" 
                                 data-instgrm-version="14"
@@ -729,26 +718,17 @@
 
         // 필터 이벤트
         function initFilters() {
-            // 전체 선택 버튼
-            const selectAll = document.getElementById('selectAllChip');
-            if (selectAll) {
-                selectAll.addEventListener('click', function(e) {
+            // 전체 토글 버튼
+            const toggleAll = document.getElementById('toggleAllChip');
+            if (toggleAll) {
+                toggleAll.addEventListener('click', function(e) {
                     e.preventDefault();
-                    selectAllFilters();
+                    toggleAllFilters();
                 });
             }
             
-            // 전체 해제 버튼
-            const deselectAll = document.getElementById('deselectAllChip');
-            if (deselectAll) {
-                deselectAll.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    deselectAllFilters();
-                });
-            }
-            
-            // 필터 칩 (전체 선택/해제 제외)
-            document.querySelectorAll('.filter-section .filter-chip:not(#selectAllChip):not(#deselectAllChip)').forEach(chip => {
+            // 필터 칩 (전체 버튼 제외)
+            document.querySelectorAll('.filter-section .filter-chip:not(#toggleAllChip)').forEach(chip => {
                 chip.addEventListener('click', function() {
                     const checkbox = this.querySelector('input');
                     checkbox.checked = !checkbox.checked;
@@ -758,7 +738,7 @@
             });
             
             // 모바일 필터
-            document.querySelectorAll('.mobile-filter-modal .filter-chip:not(#mobileSelectAllChip):not(#mobileDeselectAllChip)').forEach(chip => {
+            document.querySelectorAll('.mobile-filter-modal .filter-chip:not(#mobileToggleAllChip)').forEach(chip => {
                 chip.addEventListener('click', function() {
                     const checkbox = this.querySelector('input');
                     checkbox.checked = !checkbox.checked;
@@ -778,37 +758,33 @@
             });
         }
 
-        // 전체 선택
-        function selectAllFilters() {
-            document.querySelectorAll('.filter-type, .filter-concept').forEach(checkbox => {
-                checkbox.checked = true;
-                checkbox.parentElement.classList.add('active');
-            });
+        // 전체 토글
+        function toggleAllFilters() {
+            const toggleAllChip = document.getElementById('toggleAllChip');
+            const toggleAllCheckbox = document.getElementById('toggleAllCheckbox');
             
-            // 전체 선택/해제 버튼 상태
-            document.getElementById('selectAllChip').classList.add('active');
-            document.getElementById('deselectAllChip').classList.remove('active');
-            document.getElementById('selectAllCheckbox').checked = true;
-            document.getElementById('deselectAllCheckbox').checked = false;
+            // 현재 상태 반전
+            const newState = !toggleAllCheckbox.checked;
+            toggleAllCheckbox.checked = newState;
             
-            applyFilters();
-        }
-
-        // 전체 해제
-        function deselectAllFilters() {
-            document.querySelectorAll('.filter-type, .filter-concept').forEach(checkbox => {
-                checkbox.checked = false;
-                checkbox.parentElement.classList.remove('active');
-            });
-            
-            // 전체 선택/해제 버튼 상태
-            document.getElementById('selectAllChip').classList.remove('active');
-            document.getElementById('deselectAllChip').classList.add('active');
-            document.getElementById('selectAllCheckbox').checked = false;
-            document.getElementById('deselectAllCheckbox').checked = true;
-            
-            // 모든 마커 숨김
-            markers.forEach(m => m.marker.setMap(null));
+            if (newState) {
+                // 전체 선택
+                toggleAllChip.classList.add('active');
+                document.querySelectorAll('.filter-type, .filter-concept').forEach(checkbox => {
+                    checkbox.checked = true;
+                    checkbox.parentElement.classList.add('active');
+                });
+                applyFilters();
+            } else {
+                // 전체 해제
+                toggleAllChip.classList.remove('active');
+                document.querySelectorAll('.filter-type, .filter-concept').forEach(checkbox => {
+                    checkbox.checked = false;
+                    checkbox.parentElement.classList.remove('active');
+                });
+                // 모든 마커 숨김
+                markers.forEach(m => m.marker.setMap(null));
+            }
         }
 
         // 필터 적용
