@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>지도</title>
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=89611920fb2bfca6a5576f0b6e7f4751&libraries=services"></script>
+    <script async src="//www.instagram.com/embed.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -72,20 +73,20 @@
             padding: 8px 12px;
             background-color: #f5f5f5;
             border: 1px solid #e4e4e4;
-            border-radius: 16px;
+            border-radius: 20px;
             cursor: pointer;
             font-size: 13px;
             transition: all 0.2s;
         }
 
         .filter-chip:hover {
-            background-color: #e8f5e9;
+            background-color: #ffe8e3;
         }
 
         .filter-chip.active {
-            background-color: #00c73c;
+            background-color: #F24E29;
             color: #ffffff;
-            border-color: #00c73c;
+            border-color: #F24E29;
         }
 
         .filter-chip input[type="checkbox"] {
@@ -152,8 +153,8 @@
 
         .badge {
             padding: 4px 10px;
-            background-color: #e8f5e9;
-            color: #00c73c;
+            background-color: #ffe8e3;
+            color: #F24E29;
             border-radius: 12px;
             font-size: 12px;
             font-weight: 500;
@@ -240,7 +241,7 @@
                 left: 50%;
                 transform: translateX(-50%);
                 padding: 12px 24px;
-                background-color: #00c73c;
+                background-color: #F24E29;
                 color: #ffffff;
                 border: none;
                 border-radius: 24px;
@@ -570,16 +571,41 @@
                     if (status === kakao.maps.services.Status.OK) {
                         const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
                         
-                        const marker = new kakao.maps.Marker({
-                            map: map,
-                            position: coords
+                        // 원형 마커 생성
+                        const markerContent = document.createElement('div');
+                        markerContent.style.cssText = `
+                            width: 20px;
+                            height: 20px;
+                            background-color: #F24E29;
+                            border: 3px solid #ffffff;
+                            border-radius: 50%;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        `;
+                        
+                        // 호버 효과
+                        markerContent.addEventListener('mouseenter', function() {
+                            this.style.transform = 'scale(1.2)';
+                        });
+                        markerContent.addEventListener('mouseleave', function() {
+                            this.style.transform = 'scale(1)';
                         });
                         
-                        kakao.maps.event.addListener(marker, 'click', function() {
+                        const customOverlay = new kakao.maps.CustomOverlay({
+                            position: coords,
+                            content: markerContent,
+                            yAnchor: 0.5
+                        });
+                        
+                        customOverlay.setMap(map);
+                        
+                        // 클릭 이벤트
+                        markerContent.addEventListener('click', function() {
                             showPlaceInfo(item);
                         });
                         
-                        markers.push({ marker, data: item });
+                        markers.push({ marker: customOverlay, data: item });
                         successCount++;
                         console.log(`✅ 마커 생성 성공 (${successCount}/${data.length}): ${item.name}`);
                     } else {
@@ -639,12 +665,20 @@
             
             if (item.instagram) {
                 // 인스타그램 URL에서 게시물 ID 추출
-                const instagramId = item.instagram.match(/\/p\/([^\/]+)/)?.[1];
-                if (instagramId) {
+                const instagramMatch = item.instagram.match(/instagram\.com\/p\/([A-Za-z0-9_-]+)/);
+                if (instagramMatch) {
                     html += `
                         <div class="place-instagram">
-                            <div class="detail-label">인스타그램</div>
-                            <blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="${item.instagram}" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:100%; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);">
+                            <div class="detail-label" style="margin-bottom: 12px;">인스타그램</div>
+                            <blockquote class="instagram-media" 
+                                data-instgrm-permalink="${item.instagram}?utm_source=ig_embed&amp;utm_campaign=loading" 
+                                data-instgrm-version="14"
+                                style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:100%; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);">
+                                <div style="padding:16px;">
+                                    <a href="${item.instagram}" style="background:#FFFFFF; line-height:0; padding:0 0; text-align:center; text-decoration:none; width:100%;" target="_blank">
+                                        인스타그램에서 이 게시물 보기
+                                    </a>
+                                </div>
                             </blockquote>
                         </div>
                     `;
@@ -653,9 +687,19 @@
             
             infoContent.innerHTML = html;
             
-            // 인스타그램 임베드 스크립트 실행
-            if (item.instagram && window.instgrm) {
-                window.instgrm.Embeds.process();
+            // 인스타그램 임베드 스크립트 재실행
+            if (item.instagram) {
+                setTimeout(() => {
+                    if (window.instgrm) {
+                        window.instgrm.Embeds.process();
+                    } else {
+                        // 스크립트가 아직 로드 안 됐으면 다시 로드
+                        const script = document.createElement('script');
+                        script.async = true;
+                        script.src = '//www.instagram.com/embed.js';
+                        document.body.appendChild(script);
+                    }
+                }, 100);
             }
         }
         
