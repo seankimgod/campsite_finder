@@ -454,13 +454,26 @@
         // 데이터 로드
         async function loadData() {
             try {
+                console.log('구글 시트 URL:', SHEET_URL);
                 const response = await fetch(SHEET_URL);
+                console.log('응답 상태:', response.status);
+                
                 const csv = await response.text();
+                console.log('CSV 원본 데이터 (첫 500자):', csv.substring(0, 500));
+                
                 const data = parseCSV(csv);
+                console.log('파싱 완료, 데이터 개수:', data.length);
+                
+                if (data.length === 0) {
+                    console.warn('⚠️ 데이터가 비어있습니다. 구글 시트를 확인하세요.');
+                    alert('구글 시트에 데이터가 없거나 형식이 올바르지 않습니다.\n\n1. 구글 시트가 "웹에 게시" 되어있는지 확인\n2. 첫 번째 행이 헤더인지 확인\n3. 데이터가 2번째 행부터 있는지 확인');
+                }
+                
                 allData = data;
                 displayMarkers(data);
             } catch (error) {
-                console.error('데이터 로드 실패:', error);
+                console.error('❌ 데이터 로드 실패:', error);
+                alert('데이터 로드 실패:\n' + error.message);
             }
         }
 
@@ -472,7 +485,9 @@
             for (let i = 1; i < lines.length; i++) {
                 if (lines[i].trim() === '') continue;
                 
-                const values = lines[i].split('\t');
+                // 탭 또는 콤마로 분리 (구글 시트는 탭 사용)
+                let values = lines[i].includes('\t') ? lines[i].split('\t') : lines[i].split(',');
+                
                 const item = {
                     name: values[0]?.trim(),
                     address: values[1]?.trim(),
@@ -489,16 +504,22 @@
                 }
             }
             
+            console.log('파싱된 데이터:', data);
             return data;
         }
 
         // 마커 표시
         function displayMarkers(data) {
+            console.log('마커 표시 시작, 데이터 개수:', data.length);
+            
             // 기존 마커 제거
             markers.forEach(m => m.marker.setMap(null));
             markers = [];
             
-            data.forEach(item => {
+            let successCount = 0;
+            let failCount = 0;
+            
+            data.forEach((item, index) => {
                 geocoder.addressSearch(item.address, function(result, status) {
                     if (status === kakao.maps.services.Status.OK) {
                         const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
@@ -513,6 +534,16 @@
                         });
                         
                         markers.push({ marker, data: item });
+                        successCount++;
+                        console.log(`✅ 마커 생성 성공 (${successCount}/${data.length}): ${item.name}`);
+                    } else {
+                        failCount++;
+                        console.warn(`❌ 주소 검색 실패 (${index + 1}/${data.length}): ${item.name} - ${item.address}`);
+                    }
+                    
+                    // 마지막 항목 처리 후
+                    if (successCount + failCount === data.length) {
+                        console.log(`📍 마커 표시 완료: 성공 ${successCount}개, 실패 ${failCount}개`);
                     }
                 });
             });
