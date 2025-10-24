@@ -124,10 +124,25 @@
             </a>
         </nav>
 
-        <iframe id="contentFrame" class="content-frame" src="map.html"></iframe>
+        <iframe id="contentFrame" class="content-frame" src="home.html"></iframe>
     </div>
 
     <script>
+        // 페이지 로드 함수 (home.html에서 호출)
+        function loadPage(page) {
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('active');
+            });
+            
+            const navItem = document.querySelector(`[data-page="${page}"]`);
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+            
+            document.getElementById('contentFrame').src = page + '.html';
+        }
+        
+        // 네비게이션 클릭 이벤트
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -140,6 +155,14 @@
                 const page = this.getAttribute('data-page');
                 document.getElementById('contentFrame').src = page + '.html';
             });
+        });
+        
+        // 로고 클릭 시 홈으로
+        document.querySelector('.logo').addEventListener('click', function() {
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('active');
+            });
+            document.getElementById('contentFrame').src = 'home.html';
         });
     </script>
 </body>
