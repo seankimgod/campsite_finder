@@ -174,6 +174,27 @@
             color: #333;
         }
 
+        .copy-btn {
+            margin-left: 8px;
+            padding: 4px 10px;
+            background-color: #00c73c;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: #00b035;
+        }
+
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+
         .place-instagram {
             margin-top: 20px;
         }
@@ -294,9 +315,17 @@
                 <div class="filter-title">필터</div>
                 
                 <!-- 전체 선택/해제 버튼 -->
-                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-                    <button class="select-all-btn" onclick="selectAllFilters()">전체 선택</button>
-                    <button class="select-all-btn" onclick="deselectAllFilters()">전체 해제</button>
+                <div class="filter-group">
+                    <div class="filter-options">
+                        <label class="filter-chip active" id="selectAllChip">
+                            <input type="checkbox" id="selectAllCheckbox" checked>
+                            <span>전체 선택</span>
+                        </label>
+                        <label class="filter-chip" id="deselectAllChip">
+                            <input type="checkbox" id="deselectAllCheckbox">
+                            <span>전체 해제</span>
+                        </label>
+                    </div>
                 </div>
                 
                 <div class="filter-group">
@@ -374,9 +403,17 @@
                 </div>
                 
                 <!-- 전체 선택/해제 버튼 -->
-                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-                    <button class="select-all-btn" onclick="selectAllFilters()">전체 선택</button>
-                    <button class="select-all-btn" onclick="deselectAllFilters()">전체 해제</button>
+                <div class="filter-group">
+                    <div class="filter-options">
+                        <label class="filter-chip active" id="mobileSelectAllChip">
+                            <input type="checkbox" id="mobileSelectAllCheckbox" checked>
+                            <span>전체 선택</span>
+                        </label>
+                        <label class="filter-chip" id="mobileDeselectAllChip">
+                            <input type="checkbox" id="mobileDeselectAllCheckbox">
+                            <span>전체 해제</span>
+                        </label>
+                    </div>
                 </div>
                 
                 <div class="filter-group">
@@ -574,7 +611,10 @@
                 </div>
                 <div class="place-detail">
                     <div class="detail-label">주소</div>
-                    <div class="detail-value">${item.address}</div>
+                    <div class="detail-value">
+                        ${item.address}
+                        <button class="copy-btn" onclick="copyAddress('${item.address.replace(/'/g, "\\'")}')">복사</button>
+                    </div>
                 </div>
             `;
             
@@ -591,23 +631,42 @@
                 <div class="place-detail">
                     <div class="detail-label">편의시설</div>
                     <div class="detail-value">
-                        화장실: ${item.toilet === 'O' ? '있음' : '없음'} | 
-                        물: ${item.water === 'O' ? '가능' : '불가'}
+                        화장실: ${item.toilet === 'O' ? 'O' : 'X'} | 
+                        개수대: ${item.water === 'O' ? 'O' : 'X'}
                     </div>
                 </div>
             `;
             
             if (item.instagram) {
-                html += `
-                    <div class="place-instagram">
-                        <a href="${item.instagram}" target="_blank" class="instagram-link">
-                            📷 인스타그램 보기
-                        </a>
-                    </div>
-                `;
+                // 인스타그램 URL에서 게시물 ID 추출
+                const instagramId = item.instagram.match(/\/p\/([^\/]+)/)?.[1];
+                if (instagramId) {
+                    html += `
+                        <div class="place-instagram">
+                            <div class="detail-label">인스타그램</div>
+                            <blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="${item.instagram}" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:100%; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);">
+                            </blockquote>
+                        </div>
+                    `;
+                }
             }
             
             infoContent.innerHTML = html;
+            
+            // 인스타그램 임베드 스크립트 실행
+            if (item.instagram && window.instgrm) {
+                window.instgrm.Embeds.process();
+            }
+        }
+        
+        // 주소 복사 함수
+        function copyAddress(address) {
+            navigator.clipboard.writeText(address).then(() => {
+                alert('주소가 복사되었습니다!');
+            }).catch(err => {
+                console.error('복사 실패:', err);
+                alert('복사에 실패했습니다.');
+            });
         }
 
         // 필터 적용
@@ -626,7 +685,26 @@
 
         // 필터 이벤트
         function initFilters() {
-            document.querySelectorAll('.filter-chip').forEach(chip => {
+            // 전체 선택 버튼
+            const selectAll = document.getElementById('selectAllChip');
+            if (selectAll) {
+                selectAll.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    selectAllFilters();
+                });
+            }
+            
+            // 전체 해제 버튼
+            const deselectAll = document.getElementById('deselectAllChip');
+            if (deselectAll) {
+                deselectAll.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    deselectAllFilters();
+                });
+            }
+            
+            // 필터 칩 (전체 선택/해제 제외)
+            document.querySelectorAll('.filter-section .filter-chip:not(#selectAllChip):not(#deselectAllChip)').forEach(chip => {
                 chip.addEventListener('click', function() {
                     const checkbox = this.querySelector('input');
                     checkbox.checked = !checkbox.checked;
@@ -636,7 +714,7 @@
             });
             
             // 모바일 필터
-            document.querySelectorAll('.mobile-filter-modal .filter-chip').forEach(chip => {
+            document.querySelectorAll('.mobile-filter-modal .filter-chip:not(#mobileSelectAllChip):not(#mobileDeselectAllChip)').forEach(chip => {
                 chip.addEventListener('click', function() {
                     const checkbox = this.querySelector('input');
                     checkbox.checked = !checkbox.checked;
@@ -658,22 +736,55 @@
 
         // 전체 선택
         function selectAllFilters() {
-            document.querySelectorAll('.filter-chip').forEach(chip => {
-                const checkbox = chip.querySelector('input');
+            document.querySelectorAll('.filter-type, .filter-concept').forEach(checkbox => {
                 checkbox.checked = true;
-                chip.classList.add('active');
+                checkbox.parentElement.classList.add('active');
             });
+            
+            // 전체 선택/해제 버튼 상태
+            document.getElementById('selectAllChip').classList.add('active');
+            document.getElementById('deselectAllChip').classList.remove('active');
+            document.getElementById('selectAllCheckbox').checked = true;
+            document.getElementById('deselectAllCheckbox').checked = false;
+            
             applyFilters();
         }
 
         // 전체 해제
         function deselectAllFilters() {
-            document.querySelectorAll('.filter-chip').forEach(chip => {
-                const checkbox = chip.querySelector('input');
+            document.querySelectorAll('.filter-type, .filter-concept').forEach(checkbox => {
                 checkbox.checked = false;
-                chip.classList.remove('active');
+                checkbox.parentElement.classList.remove('active');
             });
-            applyFilters();
+            
+            // 전체 선택/해제 버튼 상태
+            document.getElementById('selectAllChip').classList.remove('active');
+            document.getElementById('deselectAllChip').classList.add('active');
+            document.getElementById('selectAllCheckbox').checked = false;
+            document.getElementById('deselectAllCheckbox').checked = true;
+            
+            // 모든 마커 숨김
+            markers.forEach(m => m.marker.setMap(null));
+        }
+
+        // 필터 적용
+        function applyFilters() {
+            const selectedTypes = Array.from(document.querySelectorAll('.filter-type:checked')).map(cb => cb.value);
+            const selectedConcepts = Array.from(document.querySelectorAll('.filter-concept:checked')).map(cb => cb.value);
+            
+            // 모두 체크 해제된 경우
+            if (selectedTypes.length === 0 && selectedConcepts.length === 0) {
+                markers.forEach(m => m.marker.setMap(null));
+                return;
+            }
+            
+            const filtered = allData.filter(item => {
+                const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(item.type);
+                const conceptMatch = selectedConcepts.length === 0 || selectedConcepts.includes(item.concept);
+                return typeMatch && conceptMatch;
+            });
+            
+            displayMarkers(filtered);
         }
 
         // 모바일 필터 모달
