@@ -131,14 +131,34 @@
 
         .card-content {
             padding: 8px 12px 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .instagram-embed {
             margin-top: 8px;
+            max-height: 450px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .instagram-embed::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to bottom, transparent, white);
+            pointer-events: none;
         }
 
         .instagram-embed blockquote {
             margin: 0 !important;
+            transform: scale(0.95);
+            transform-origin: top left;
         }
 
         /* 로딩 */
