@@ -41,40 +41,48 @@
             color: #666;
         }
 
-        /* 핀터레스트 스타일 그리드 */
+        /* 5열 그리드 */
         .grid {
-            column-count: 4;
-            column-gap: 16px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
         }
 
-        @media (max-width: 1200px) {
+        @media (max-width: 1400px) {
             .grid {
-                column-count: 3;
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: repeat(3, 1fr);
             }
         }
 
         @media (max-width: 768px) {
             .grid {
-                column-count: 2;
-                column-gap: 12px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
             }
         }
 
         @media (max-width: 480px) {
             .grid {
-                column-count: 1;
+                grid-template-columns: 1fr;
             }
         }
 
-        /* 카드 */
+        /* 카드 - 고정 크기 */
         .card {
-            break-inside: avoid;
-            margin-bottom: 16px;
             background-color: #ffffff;
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             transition: box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .card:hover {
@@ -161,6 +169,53 @@
             font-size: 12px;
             font-weight: 500;
         }
+
+        /* 페이지네이션 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 40px;
+            padding-bottom: 40px;
+        }
+
+        .page-btn {
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            background-color: #ffffff;
+            color: #666;
+            border: 1px solid #e4e4e4;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover {
+            background-color: #f5f5f5;
+            border-color: #F24E29;
+            color: #F24E29;
+        }
+
+        .page-btn.active {
+            background-color: #F24E29;
+            color: #ffffff;
+            border-color: #F24E29;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .page-btn:disabled:hover {
+            background-color: #ffffff;
+            border-color: #e4e4e4;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -172,10 +227,17 @@
 
         <div class="loading" id="loading">데이터 로딩 중</div>
         <div class="grid" id="grid"></div>
+        
+        <!-- 페이지네이션 -->
+        <div class="pagination" id="pagination" style="display: none;"></div>
     </div>
 
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXIUYgOtCn0xs3kX8erZJVjzVwLw33YTbAUhRXll7d_qFoB_vWKQUXhUepIjUvaJVM2uyEsd1isi9R/pub?output=csv';
+        
+        const ITEMS_PER_PAGE = 10; // 5열 x 2행 = 10개
+        let allData = [];
+        let currentPage = 1;
 
         // 데이터 로드
         async function loadData() {
@@ -184,8 +246,11 @@
                 const csv = await response.text();
                 const data = parseCSV(csv);
                 
+                allData = data;
                 console.log('로드된 데이터:', data.length, '개');
-                displayCards(data);
+                
+                displayPage(1);
+                renderPagination();
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
                 document.getElementById('loading').textContent = '데이터 로드 실패';
@@ -222,19 +287,25 @@
             return data;
         }
 
-        // 카드 표시
-        function displayCards(data) {
+        // 페이지 표시
+        function displayPage(page) {
+            currentPage = page;
             const grid = document.getElementById('grid');
             const loading = document.getElementById('loading');
             
-            if (data.length === 0) {
+            if (allData.length === 0) {
                 loading.textContent = '표시할 데이터가 없습니다';
                 return;
             }
             
             loading.style.display = 'none';
+            grid.innerHTML = '';
             
-            data.forEach((item, index) => {
+            const startIndex = (page - 1) * ITEMS_PER_PAGE;
+            const endIndex = startIndex + ITEMS_PER_PAGE;
+            const pageData = allData.slice(startIndex, endIndex);
+            
+            pageData.forEach((item) => {
                 const card = document.createElement('div');
                 card.className = 'card';
                 
@@ -269,16 +340,117 @@
                     window.instgrm.Embeds.process();
                 }
             }, 100);
+            
+            // 상단으로 스크롤
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 페이지네이션 렌더링
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            const totalPages = Math.ceil(allData.length / ITEMS_PER_PAGE);
+            
+            if (totalPages <= 1) {
+                pagination.style.display = 'none';
+                return;
+            }
+            
+            pagination.style.display = 'flex';
+            pagination.innerHTML = '';
+            
+            // 이전 버튼
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.textContent = '‹';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    displayPage(currentPage - 1);
+                    renderPagination();
+                }
+            };
+            pagination.appendChild(prevBtn);
+            
+            // 페이지 번호
+            const maxButtons = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+            
+            if (startPage > 1) {
+                const firstBtn = document.createElement('button');
+                firstBtn.className = 'page-btn';
+                firstBtn.textContent = '1';
+                firstBtn.onclick = () => {
+                    displayPage(1);
+                    renderPagination();
+                };
+                pagination.appendChild(firstBtn);
+                
+                if (startPage > 2) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.style.padding = '0 8px';
+                    dots.style.color = '#999';
+                    pagination.appendChild(dots);
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = 'page-btn';
+                if (i === currentPage) {
+                    pageBtn.classList.add('active');
+                }
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => {
+                    displayPage(i);
+                    renderPagination();
+                };
+                pagination.appendChild(pageBtn);
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.style.padding = '0 8px';
+                    dots.style.color = '#999';
+                    pagination.appendChild(dots);
+                }
+                
+                const lastBtn = document.createElement('button');
+                lastBtn.className = 'page-btn';
+                lastBtn.textContent = totalPages;
+                lastBtn.onclick = () => {
+                    displayPage(totalPages);
+                    renderPagination();
+                };
+                pagination.appendChild(lastBtn);
+            }
+            
+            // 다음 버튼
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.textContent = '›';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    displayPage(currentPage + 1);
+                    renderPagination();
+                }
+            };
+            pagination.appendChild(nextBtn);
         }
 
         // 지도로 이동
         function goToMap(name, address) {
-            // 부모 프레임의 함수 호출 (index.html)
             if (window.parent && window.parent.loadPage) {
-                // 지도 탭으로 이동
                 window.parent.loadPage('map');
                 
-                // 지도가 로드된 후 해당 장소 표시
                 setTimeout(() => {
                     const mapFrame = window.parent.document.getElementById('contentFrame');
                     if (mapFrame && mapFrame.contentWindow) {
