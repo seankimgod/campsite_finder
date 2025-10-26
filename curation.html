@@ -90,7 +90,7 @@
         }
 
         .card-header {
-            padding: 16px;
+            padding: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -98,19 +98,22 @@
         }
 
         .place-name {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
             color: #333;
             flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .map-btn {
-            padding: 6px 14px;
+            padding: 5px 12px;
             background-color: #F24E29;
             color: #ffffff;
             border: none;
-            border-radius: 20px;
-            font-size: 13px;
+            border-radius: 16px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
@@ -127,11 +130,15 @@
         }
 
         .card-content {
-            padding: 12px 16px 16px;
+            padding: 8px 12px 12px;
         }
 
         .instagram-embed {
             margin-top: 8px;
+        }
+
+        .instagram-embed blockquote {
+            margin: 0 !important;
         }
 
         /* 로딩 */
@@ -325,7 +332,7 @@
                             <blockquote class="instagram-media" 
                                 data-instgrm-permalink="${item.instagram}" 
                                 data-instgrm-version="14"
-                                style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5); margin: 1px; max-width:100%; min-width:260px; padding:0; width:calc(100% - 2px);">
+                                style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5); margin: 0; max-width:100%; padding:0; width:100%;">
                             </blockquote>
                         </div>
                     </div>
