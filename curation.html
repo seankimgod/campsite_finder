@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>추천</title>
+    <script async src="//www.instagram.com/embed.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -14,25 +15,25 @@
 
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
             padding: 40px 20px;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 60px;
+            margin-bottom: 40px;
         }
 
         .header h1 {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: 700;
-            margin-bottom: 16px;
             color: #333;
+            margin-bottom: 12px;
         }
 
         .header p {
@@ -40,256 +41,260 @@
             color: #666;
         }
 
-        .section {
-            margin-bottom: 60px;
+        /* 핀터레스트 스타일 그리드 */
+        .grid {
+            column-count: 4;
+            column-gap: 20px;
         }
 
-        .section-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 24px;
-            color: #333;
-        }
-
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 24px;
-        }
-
-        .card {
-            background-color: #ffffff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-            cursor: pointer;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        }
-
-        .card-image {
-            width: 100%;
-            height: 200px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-        }
-
-        .card-content {
-            padding: 20px;
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #333;
-        }
-
-        .card-description {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 12px;
-        }
-
-        .card-tags {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
-        .tag {
-            padding: 4px 10px;
-            background-color: #e8f5e9;
-            color: #00c73c;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
+        @media (max-width: 1200px) {
+            .grid {
+                column-count: 3;
+            }
         }
 
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 28px;
+            .grid {
+                column-count: 2;
             }
+        }
 
-            .section-title {
-                font-size: 20px;
+        @media (max-width: 480px) {
+            .grid {
+                column-count: 1;
             }
+        }
 
-            .card-grid {
-                grid-template-columns: 1fr;
-            }
+        /* 카드 */
+        .card {
+            break-inside: avoid;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            transform: translateY(-4px);
+        }
+
+        .card-header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .place-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        .map-btn {
+            padding: 6px 14px;
+            background-color: #F24E29;
+            color: #ffffff;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .map-btn:hover {
+            background-color: #d63d1f;
+            transform: scale(1.05);
+        }
+
+        .map-btn:active {
+            transform: scale(0.95);
+        }
+
+        .card-content {
+            padding: 16px;
+        }
+
+        .instagram-embed {
+            margin-top: 12px;
+        }
+
+        /* 로딩 */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+            font-size: 16px;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* 뱃지 */
+        .badges {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            background-color: #ffe8e3;
+            color: #F24E29;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>✨ 추천 캠핑지</h1>
-            <p>계절별, 테마별 추천 노지캠핑 장소를 소개합니다</p>
+            <h1>🏕️ 추천 캠핑지</h1>
+            <p>엄선된 노지캠핑 명소를 만나보세요</p>
         </div>
 
-        <div class="section">
-            <div class="section-title">🌸 봄 추천</div>
-            <div class="card-grid">
-                <div class="card">
-                    <div class="card-image">🌸</div>
-                    <div class="card-content">
-                        <div class="card-title">벚꽃 명소 캠핑</div>
-                        <div class="card-description">
-                            봄에는 벚꽃이 만개하는 장소에서 캠핑을 즐겨보세요. 
-                            낮에는 벚꽃 구경, 밤에는 별빛 아래 캠핑!
-                        </div>
-                        <div class="card-tags">
-                            <span class="tag">백패킹</span>
-                            <span class="tag">산</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-image">🌿</div>
-                    <div class="card-content">
-                        <div class="card-title">신록의 계곡</div>
-                        <div class="card-description">
-                            신록이 우거진 계곡에서 시원한 물소리와 함께 
-                            평화로운 시간을 보내세요.
-                        </div>
-                        <div class="card-tags">
-                            <span class="tag">캠핑</span>
-                            <span class="tag">계곡</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">☀️ 여름 추천</div>
-            <div class="card-grid">
-                <div class="card">
-                    <div class="card-image">🏖️</div>
-                    <div class="card-content">
-                        <div class="card-title">해변 차박</div>
-                        <div class="card-description">
-                            시원한 바닷바람과 파도 소리를 들으며 
-                            차 안에서 편안한 휴식을 즐기세요.
-                        </div>
-                        <div class="card-tags">
-                            <span class="tag">차박</span>
-                            <span class="tag">바다</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-image">💧</div>
-                    <div class="card-content">
-                        <div class="card-title">계곡 물놀이</div>
-                        <div class="card-description">
-                            맑은 계곡물에서 물놀이하고 캠핑하기 좋은 
-                            여름철 최고의 선택!
-                        </div>
-                        <div class="card-tags">
-                            <span class="tag">캠핑</span>
-                            <span class="tag">계곡</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-image">🏔️</div>
-                    <div class="card-content">
-                        <div class="card-title">고산 백패킹</div>
-                        <div class="card-description">
-                            시원한 고산지대에서 백패킹을 즐기며 
-                            더위를 피해보세요.
-                        </div>
-                        <div class="card-tags">
-                            <span class="tag">백패킹</span>
-                            <span class="tag">산</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">🍂 가을 추천</div>
-            <div class="card-grid">
-                <div class="card">
-                    <div class="card-image">🍁</div>
-                    <div class="card-content">
-                        <div class="card-title">단풍 명소</div>
-                        <div class="card-description">
-                            붉게 물든 단풍과 함께하는 가을 캠핑, 
-                            자연의 아름다움을 만끽하세요.
-                        </div>
-                        <div class="card-tags">
-                            <span class="tag">백패킹</span>
-                            <span class="tag">산</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-image">🌾</div>
-                    <div class="card-content">
-                        <div class="card-title">들판 피크닉</div>
-                        <div class="card-description">
-                            황금빛 들판에서 여유로운 피크닉과 
-                            가벼운 캠핑을 즐겨보세요.
-                        </div>
-                        <div class="card-tags">
-                            <span class="tag">피크닉</span>
-                            <span class="tag">들판</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">❄️ 겨울 추천</div>
-            <div class="card-grid">
-                <div class="card">
-                    <div class="card-image">⛺</div>
-                    <div class="card-content">
-                        <div class="card-title">설경 캠핑</div>
-                        <div class="card-description">
-                            눈 덮인 풍경 속에서 따뜻한 캠핑을 즐기는 
-                            특별한 경험을 해보세요.
-                        </div>
-                        <div class="card-tags">
-                            <span class="tag">캠핑</span>
-                            <span class="tag">산</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-image">🚗</div>
-                    <div class="card-content">
-                        <div class="card-title">차박 명소</div>
-                        <div class="card-description">
-                            추운 겨울, 차 안에서 따뜻하게 보내는 
-                            차박 캠핑이 제격입니다.
-                        </div>
-                        <div class="card-tags">
-                            <span class="tag">차박</span>
-                            <span class="tag">바다</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="loading" id="loading">데이터 로딩 중</div>
+        <div class="grid" id="grid"></div>
     </div>
+
+    <script>
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXIUYgOtCn0xs3kX8erZJVjzVwLw33YTbAUhRXll7d_qFoB_vWKQUXhUepIjUvaJVM2uyEsd1isi9R/pub?output=csv';
+
+        // 데이터 로드
+        async function loadData() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const csv = await response.text();
+                const data = parseCSV(csv);
+                
+                console.log('로드된 데이터:', data.length, '개');
+                displayCards(data);
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                document.getElementById('loading').textContent = '데이터 로드 실패';
+            }
+        }
+
+        // CSV 파싱
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim() === '') continue;
+                
+                let values = lines[i].includes('\t') ? lines[i].split('\t') : lines[i].split(',');
+                
+                const item = {
+                    name: values[0]?.trim(),
+                    address: values[1]?.trim(),
+                    type: values[2]?.trim(),
+                    concept: values[3]?.trim(),
+                    notes: values[4]?.trim(),
+                    toilet: values[5]?.trim(),
+                    water: values[6]?.trim(),
+                    instagram: values[7]?.trim()
+                };
+                
+                // 인스타그램이 있는 항목만 추가
+                if (item.name && item.instagram) {
+                    data.push(item);
+                }
+            }
+            
+            return data;
+        }
+
+        // 카드 표시
+        function displayCards(data) {
+            const grid = document.getElementById('grid');
+            const loading = document.getElementById('loading');
+            
+            if (data.length === 0) {
+                loading.textContent = '표시할 데이터가 없습니다';
+                return;
+            }
+            
+            loading.style.display = 'none';
+            
+            data.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="place-name">${item.name}</div>
+                        <button class="map-btn" onclick="goToMap('${item.name.replace(/'/g, "\\'")}', '${item.address.replace(/'/g, "\\'")}')">
+                            지도보기
+                        </button>
+                    </div>
+                    <div class="card-content">
+                        <div class="badges">
+                            <span class="badge">${item.type}</span>
+                            <span class="badge">${item.concept}</span>
+                        </div>
+                        <div class="instagram-embed">
+                            <blockquote class="instagram-media" 
+                                data-instgrm-permalink="${item.instagram}" 
+                                data-instgrm-version="14"
+                                style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5); margin: 1px; max-width:100%; min-width:280px; padding:0;">
+                            </blockquote>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+            
+            // 인스타그램 임베드 처리
+            setTimeout(() => {
+                if (window.instgrm) {
+                    window.instgrm.Embeds.process();
+                }
+            }, 100);
+        }
+
+        // 지도로 이동
+        function goToMap(name, address) {
+            // 부모 프레임의 함수 호출 (index.html)
+            if (window.parent && window.parent.loadPage) {
+                // 지도 탭으로 이동
+                window.parent.loadPage('map');
+                
+                // 지도가 로드된 후 해당 장소 표시
+                setTimeout(() => {
+                    const mapFrame = window.parent.document.getElementById('contentFrame');
+                    if (mapFrame && mapFrame.contentWindow) {
+                        const mapWindow = mapFrame.contentWindow;
+                        if (mapWindow.showPlaceByAddress) {
+                            mapWindow.showPlaceByAddress(address);
+                        }
+                    }
+                }, 500);
+            }
+        }
+
+        // 초기화
+        window.addEventListener('load', function() {
+            loadData();
+        });
+    </script>
 </body>
 </html>
