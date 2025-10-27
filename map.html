@@ -460,6 +460,7 @@
         let geocoder;
         let allData = [];
         let lastClickedPlace = null;
+        let isMarkerDragging = false;
 
         // 사이드바 토글
         function toggleSidebar() {
@@ -490,8 +491,6 @@
             
             map = new kakao.maps.Map(container, options);
             geocoder = new kakao.maps.services.Geocoder();
-            
-            let isMarkerDragging = false;
             
             // 지도 드래그 시작 시 사이드바 닫기
             kakao.maps.event.addListener(map, 'dragstart', function() {
@@ -595,45 +594,27 @@
                         
                         customOverlay.setMap(map);
                         
-                        // 마커 클릭 이벤트
-                        let markerMouseDownTime = 0;
-                        let markerHasMoved = false;
+                        // 마커 클릭 이벤트 (단순화)
+                        let mouseDownTime = 0;
+                        let mouseDownPos = null;
                         
-                        markerContent.addEventListener('mousedown', function() {
-                            markerMouseDownTime = Date.now();
-                            markerHasMoved = false;
+                        markerContent.addEventListener('mousedown', function(e) {
+                            mouseDownTime = Date.now();
+                            mouseDownPos = { x: e.clientX, y: e.clientY };
                             isMarkerDragging = true;
                         });
                         
-                        markerContent.addEventListener('mousemove', function() {
-                            if (isMarkerDragging) {
-                                markerHasMoved = true;
-                            }
-                        });
-                        
-                        markerContent.addEventListener('mouseup', function() {
-                            const clickDuration = Date.now() - markerMouseDownTime;
+                        markerContent.addEventListener('mouseup', function(e) {
+                            const duration = Date.now() - mouseDownTime;
+                            const moved = mouseDownPos ? 
+                                Math.abs(e.clientX - mouseDownPos.x) > 5 || 
+                                Math.abs(e.clientY - mouseDownPos.y) > 5 : false;
+                            
                             isMarkerDragging = false;
                             
-                            // 짧은 클릭이고 움직이지 않았으면
-                            if (clickDuration < 200 && !markerHasMoved) {
-                                // 같은 마커면 정보만 표시
-                                if (lastClickedPlace && lastClickedPlace.address === item.address) {
-                                    showPlaceInfo(item);
-                                } else {
-                                    // 다른 마커면 접혔다 열기
-                                    if (lastClickedPlace) {
-                                        closeSidebar();
-                                        setTimeout(() => {
-                                            showPlaceInfo(item);
-                                        }, 100);
-                                    } else {
-                                        showPlaceInfo(item);
-                                    }
-                                }
-                            } else if (lastClickedPlace && lastClickedPlace.address !== item.address) {
-                                // 다른 마커를 클릭 후 떼면 사이드바 닫기
-                                closeSidebar();
+                            // 짧은 시간 + 거의 안움직임 = 클릭
+                            if (duration < 300 && !moved) {
+                                showPlaceInfo(item);
                             }
                         });
                         
