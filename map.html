@@ -447,6 +447,7 @@
         function closeSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.add('collapsed');
+            lastClickedPlace = null;
         }
 
         // 지도 초기화
@@ -462,11 +463,6 @@
             
             // 지도 클릭 시 사이드바 닫기
             kakao.maps.event.addListener(map, 'click', function() {
-                closeSidebar();
-            });
-            
-            // 지도 드래그 시 사이드바 닫기
-            kakao.maps.event.addListener(map, 'dragstart', function() {
                 closeSidebar();
             });
             
@@ -574,19 +570,30 @@
             });
         }
 
+        let lastClickedPlace = null;
+
         // 장소 정보 표시
         function showPlaceInfo(item) {
             const isMobile = window.innerWidth <= 768;
             
-            // 사이드바 열기
+            // PC에서만 사이드바 로직 적용
             if (!isMobile) {
-                openSidebar();
-            }
-            
-            if (isMobile) {
-                showMobilePlaceInfo(item);
+                // 다른 마커 클릭 시 먼저 닫기
+                if (lastClickedPlace && lastClickedPlace.address !== item.address) {
+                    closeSidebar();
+                    setTimeout(() => {
+                        openSidebar();
+                        lastClickedPlace = item;
+                        showDesktopPlaceInfo(item);
+                    }, 100);
+                } else {
+                    // 같은 마커이거나 처음 클릭
+                    openSidebar();
+                    lastClickedPlace = item;
+                    showDesktopPlaceInfo(item);
+                }
             } else {
-                showDesktopPlaceInfo(item);
+                showMobilePlaceInfo(item);
             }
         }
 
