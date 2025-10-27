@@ -137,6 +137,27 @@
             border-color: #F24E29;
         }
 
+        /* 형태별 필터 색상 */
+        .filter-chip.type-camping.active {
+            background-color: #F24E29;
+            border-color: #F24E29;
+        }
+
+        .filter-chip.type-backpacking.active {
+            background-color: #FFB800;
+            border-color: #FFB800;
+        }
+
+        .filter-chip.type-chabak.active {
+            background-color: #00C73C;
+            border-color: #00C73C;
+        }
+
+        .filter-chip.type-picnic.active {
+            background-color: #FF69B4;
+            border-color: #FF69B4;
+        }
+
         .filter-chip input[type="checkbox"] {
             display: none;
         }
@@ -358,19 +379,19 @@
                 <div class="filter-group">
                     <div class="filter-group-label">형태</div>
                     <div class="filter-options">
-                        <label class="filter-chip active">
+                        <label class="filter-chip active type-camping">
                             <input type="checkbox" class="filter-type" value="캠핑" checked>
                             <span>캠핑</span>
                         </label>
-                        <label class="filter-chip active">
+                        <label class="filter-chip active type-backpacking">
                             <input type="checkbox" class="filter-type" value="백패킹" checked>
                             <span>백패킹</span>
                         </label>
-                        <label class="filter-chip active">
+                        <label class="filter-chip active type-chabak">
                             <input type="checkbox" class="filter-type" value="차박" checked>
                             <span>차박</span>
                         </label>
-                        <label class="filter-chip active">
+                        <label class="filter-chip active type-picnic">
                             <input type="checkbox" class="filter-type" value="피크닉" checked>
                             <span>피크닉</span>
                         </label>
@@ -426,10 +447,19 @@
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRXIUYgOtCn0xs3kX8erZJVjzVwLw33YTbAUhRXll7d_qFoB_vWKQUXhUepIjUvaJVM2uyEsd1isi9R/pub?output=csv';
         
+        // 형태별 색상
+        const TYPE_COLORS = {
+            '캠핑': '#F24E29',      // 빨강 (기존)
+            '백패킹': '#FFB800',    // 황색
+            '차박': '#00C73C',      // 초록
+            '피크닉': '#FF69B4'     // 핑크
+        };
+        
         let map;
         let markers = [];
         let geocoder;
         let allData = [];
+        let lastClickedPlace = null;
 
         // 사이드바 토글
         function toggleSidebar() {
@@ -461,9 +491,13 @@
             map = new kakao.maps.Map(container, options);
             geocoder = new kakao.maps.services.Geocoder();
             
-            // 지도 클릭 시 사이드바 닫기
-            kakao.maps.event.addListener(map, 'click', function() {
-                closeSidebar();
+            let isMarkerDragging = false;
+            
+            // 지도 드래그 시작 시 사이드바 닫기
+            kakao.maps.event.addListener(map, 'dragstart', function() {
+                if (!isMarkerDragging) {
+                    closeSidebar();
+                }
             });
             
             // 지도 타입 컨트롤
@@ -533,11 +567,12 @@
                         const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
                         
                         // 원형 마커 생성
+                        const markerColor = TYPE_COLORS[item.type] || '#F24E29';
                         const markerContent = document.createElement('div');
                         markerContent.style.cssText = `
                             width: 20px;
                             height: 20px;
-                            background-color: #F24E29;
+                            background-color: ${markerColor};
                             border: 3px solid #ffffff;
                             border-radius: 50%;
                             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
@@ -560,8 +595,46 @@
                         
                         customOverlay.setMap(map);
                         
-                        markerContent.addEventListener('click', function() {
-                            showPlaceInfo(item);
+                        // 마커 클릭 이벤트
+                        let markerMouseDownTime = 0;
+                        let markerHasMoved = false;
+                        
+                        markerContent.addEventListener('mousedown', function() {
+                            markerMouseDownTime = Date.now();
+                            markerHasMoved = false;
+                            isMarkerDragging = true;
+                        });
+                        
+                        markerContent.addEventListener('mousemove', function() {
+                            if (isMarkerDragging) {
+                                markerHasMoved = true;
+                            }
+                        });
+                        
+                        markerContent.addEventListener('mouseup', function() {
+                            const clickDuration = Date.now() - markerMouseDownTime;
+                            isMarkerDragging = false;
+                            
+                            // 짧은 클릭이고 움직이지 않았으면
+                            if (clickDuration < 200 && !markerHasMoved) {
+                                // 같은 마커면 정보만 표시
+                                if (lastClickedPlace && lastClickedPlace.address === item.address) {
+                                    showPlaceInfo(item);
+                                } else {
+                                    // 다른 마커면 접혔다 열기
+                                    if (lastClickedPlace) {
+                                        closeSidebar();
+                                        setTimeout(() => {
+                                            showPlaceInfo(item);
+                                        }, 100);
+                                    } else {
+                                        showPlaceInfo(item);
+                                    }
+                                }
+                            } else if (lastClickedPlace && lastClickedPlace.address !== item.address) {
+                                // 다른 마커를 클릭 후 떼면 사이드바 닫기
+                                closeSidebar();
+                            }
                         });
                         
                         markers.push({ marker: customOverlay, data: item });
