@@ -601,8 +601,9 @@
             map = new kakao.maps.Map(container, options);
             geocoder = new kakao.maps.services.Geocoder();
             
-            // 지도 드래그 시작 시 사이드바 닫기
-            kakao.maps.event.addListener(map, 'dragstart', function() {
+            // 지도 빈 곳 클릭 시에만 사이드바 닫기
+            kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+                // 마커 클릭이 아닌 경우에만 닫기
                 if (!isMarkerDragging) {
                     closeSidebar();
                     closeMobilePlaceCard();
@@ -704,17 +705,19 @@
                         
                         customOverlay.setMap(map);
                         
-                        // 마커 클릭 이벤트 (단순화)
+                        // 마커 클릭 후 뗄 때 사이드바 열기
                         let mouseDownTime = 0;
                         let mouseDownPos = null;
                         
                         markerContent.addEventListener('mousedown', function(e) {
+                            e.stopPropagation(); // 지도 클릭 이벤트 전파 방지
                             mouseDownTime = Date.now();
                             mouseDownPos = { x: e.clientX, y: e.clientY };
                             isMarkerDragging = true;
                         });
                         
                         markerContent.addEventListener('mouseup', function(e) {
+                            e.stopPropagation(); // 지도 클릭 이벤트 전파 방지
                             const duration = Date.now() - mouseDownTime;
                             const moved = mouseDownPos ? 
                                 Math.abs(e.clientX - mouseDownPos.x) > 5 || 
@@ -723,6 +726,30 @@
                             isMarkerDragging = false;
                             
                             // 짧은 시간 + 거의 안움직임 = 클릭
+                            if (duration < 300 && !moved) {
+                                showPlaceInfo(item);
+                            }
+                        });
+                        
+                        // 터치 이벤트 (모바일)
+                        markerContent.addEventListener('touchstart', function(e) {
+                            e.stopPropagation();
+                            mouseDownTime = Date.now();
+                            const touch = e.touches[0];
+                            mouseDownPos = { x: touch.clientX, y: touch.clientY };
+                            isMarkerDragging = true;
+                        });
+                        
+                        markerContent.addEventListener('touchend', function(e) {
+                            e.stopPropagation();
+                            const duration = Date.now() - mouseDownTime;
+                            const touch = e.changedTouches[0];
+                            const moved = mouseDownPos ? 
+                                Math.abs(touch.clientX - mouseDownPos.x) > 5 || 
+                                Math.abs(touch.clientY - mouseDownPos.y) > 5 : false;
+                            
+                            isMarkerDragging = false;
+                            
                             if (duration < 300 && !moved) {
                                 showPlaceInfo(item);
                             }
